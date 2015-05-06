@@ -2,23 +2,21 @@
 use std::io::Read;
 
 /// Reads next UVarint.
-pub fn read_uvarint<R: Read>(input: &mut R) -> Option<u32> {
-    let mut value: u32 = 0;
-    let mut shift: u32 = 0;
+pub fn read_uvarint<R: Read>(input: &mut R) -> Option<u64> {
+    let mut value = 0;
+    let mut shift: usize = 0;
 
     loop {
         let mut buffer = [0u8; 1];
         if input.read(&mut buffer).unwrap() == 0 {
             return None;
         }
-        value |= ((buffer[0] & 0x7F) as u32) << shift;
+        value = value | ((buffer[0] & 0x7F) as u64) << shift;
         if buffer[0] & 0x80 == 0 {
-            break;
+            return Some(value);
         }
         shift += 7;
     }
-
-    Some(value)
 }
 
 #[test]

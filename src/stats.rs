@@ -5,7 +5,7 @@ use protobuf;
 
 #[derive(Debug)]
 pub struct Tank {
-    pub id: u32,
+    pub id: u16,
     pub battles: u32,
     pub wins: u32
 }
@@ -26,15 +26,14 @@ pub fn read_account<R: Read>(input: &mut R) -> Option<Account> {
     let mut tanks = Vec::new();
     for _ in 0..tank_count {
         let tank_id = protobuf::read_uvarint(input).unwrap();
-        let battles = protobuf::read_uvarint(input).unwrap();
+        let battles = protobuf::read_uvarint(input).unwrap() ;
         let wins = protobuf::read_uvarint(input).unwrap();
-        tanks.push(Tank { id: tank_id, battles: battles, wins: wins });
+        tanks.push(Tank { id: tank_id as u16, battles: battles as u32, wins: wins as u32 });
     }
-    Some(Account { id: account_id, tanks: tanks })
+    Some(Account { id: account_id as u32, tanks: tanks })
 }
 
 /// Skips account header.
-/// TODO: read 2 bytes at once.
 fn skip_account_header<R: Read>(input: &mut R) -> bool {
     let mut buffer = [0u8; 1];
     input.read(&mut buffer).unwrap() == 1 && input.read(&mut buffer).unwrap() == 1
