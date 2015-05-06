@@ -1,0 +1,4 @@
+[package]
+name = "rusty-tank"
+version = "0.1.0"
+authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
