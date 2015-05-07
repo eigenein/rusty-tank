@@ -26,7 +26,7 @@ pub fn read_account<R: Read>(input: &mut R) -> Option<Account> {
     let mut tanks = Vec::new();
     for _ in 0..tank_count {
         let tank_id = protobuf::read_uvarint(input).unwrap();
-        let battles = protobuf::read_uvarint(input).unwrap() ;
+        let battles = protobuf::read_uvarint(input).unwrap();
         let wins = protobuf::read_uvarint(input).unwrap();
         tanks.push(Tank { id: tank_id as u16, battles: battles as u32, wins: wins as u32 });
     }
