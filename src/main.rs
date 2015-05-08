@@ -14,8 +14,6 @@ mod protobuf;
 mod stats;
 mod svd;
 
-type RatingTable = csr::Csr<u16, f32>;
-
 #[allow(dead_code)]
 fn main() {
     let mut input = get_input();
@@ -25,7 +23,7 @@ fn main() {
 /// Reads statistics file.
 ///
 /// Returns train rating table and test rating table.
-fn read_stats<R: Read>(input: &mut R, encyclopedia: encyclopedia::Encyclopedia) -> (RatingTable, RatingTable) {
+fn read_stats<R: Read>(input: &mut R, encyclopedia: encyclopedia::Encyclopedia) -> (csr::Csr, csr::Csr) {
     use time::now;
 
     use rand::{Rng, thread_rng};
@@ -33,8 +31,8 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: encyclopedia::Encyclopedia) 
     let start_time = time::now();
     let mut rng = rand::thread_rng();
 
-    let mut train_table = RatingTable::new();
-    let mut test_table = RatingTable::new();
+    let mut train_table = csr::Csr::new();
+    let mut test_table = csr::Csr::new();
 
     println!("Reading started at {}.", start_time.ctime());
 

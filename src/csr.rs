@@ -2,19 +2,19 @@
 
 /// Value with the corresponding column.
 #[derive(Debug)]
-pub struct ColumnValue<I, V> {
-    pub column: I,
-    pub value: V,
+pub struct ColumnValue {
+    pub column: usize,
+    pub value: f32,
 }
 
 /// Compressed Sparse Row matrix.
 #[derive(Debug)]
-pub struct Csr<I, V> {
-    values: Vec<ColumnValue<I, V>>,
+pub struct Csr {
+    values: Vec<ColumnValue>,
     pointers: Vec<usize>,
 }
 
-impl<I, V> Csr<I, V> {
+impl Csr {
     pub fn new() -> Self {
         Csr { values: Vec::new(), pointers: Vec::new() }
     }
@@ -27,7 +27,7 @@ impl<I, V> Csr<I, V> {
     }
 
     /// Adds a new value to the current row.
-    pub fn next(&mut self, column: I, value: V) {
+    pub fn next(&mut self, column: usize, value: f32) {
         self.values.push(ColumnValue { value: value, column: column });
     }
 
@@ -42,34 +42,8 @@ impl<I, V> Csr<I, V> {
     }
 
     /// Gets a slice to the row.
-    pub fn get_row(&self, index: usize) -> &[ColumnValue<I, V>] {
+    pub fn get_row(&self, index: usize) -> &[ColumnValue] {
         &self.values[self.pointers[index]..self.pointers[index + 1]]
-    }
-
-    /// Gets an iterator over the matrix.
-    pub fn iter(&self) -> CsrIterator<I, V> {
-        CsrIterator { csr: self, index: 0 }
-    }
-}
-
-/// Value with the corresponding row and column.
-#[derive(Debug)]
-pub struct MatrixValue<I, V> {
-    row: usize,
-    column_value: ColumnValue<I, V>,
-}
-
-/// Iterates over CSR matrix.
-pub struct CsrIterator<'a, I: 'a, V: 'a> {
-    csr: &'a Csr<I, V>,
-    index: usize,
-}
-
-impl<'a, I, V> Iterator for CsrIterator<'a, I, V> {
-    type Item = MatrixValue<I, V>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        None // TODO: return the next item or None.
     }
 }
 

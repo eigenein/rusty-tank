@@ -4,12 +4,12 @@ use std::collections::HashMap;
 
 pub struct Encyclopedia {
     /// Maps tank ID into column number.
-    tank_column: HashMap<u16, u16>
+    tank_column: HashMap<u16, usize>
 }
 
 impl Encyclopedia {
     /// Gets column by tank ID.
-    pub fn get_column(&self, tank_id: u16) -> u16 {
+    pub fn get_column(&self, tank_id: u16) -> usize {
         *self.tank_column.get(&tank_id).unwrap()
     }
 
