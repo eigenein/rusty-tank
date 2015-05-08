@@ -3,13 +3,13 @@
 #[derive(Debug)]
 pub struct IndexedValue<I, V> {
     index: I,
-    value: V
+    value: V,
 }
 
 #[derive(Debug)]
 pub struct CSR<I, V> {
     values: Vec<IndexedValue<I, V>>,
-    pointers: Vec<usize>
+    pointers: Vec<usize>,
 }
 
 impl<I, V> CSR<I, V> {

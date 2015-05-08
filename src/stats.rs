@@ -7,13 +7,13 @@ use protobuf;
 pub struct Tank {
     pub id: u16,
     pub battles: u32,
-    pub wins: u32
+    pub wins: u32,
 }
 
 #[derive(Debug)]
 pub struct Account {
     pub id: u32,
-    pub tanks: Vec<Tank>
+    pub tanks: Vec<Tank>,
 }
 
 /// Reads next account statistics.
