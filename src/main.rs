@@ -14,7 +14,7 @@ mod protobuf;
 mod stats;
 mod svd;
 
-type RatingTable = csr::CSR<u16, f32>;
+type RatingTable = csr::Csr<u16, f32>;
 
 #[allow(dead_code)]
 fn main() {

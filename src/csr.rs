@@ -1,20 +1,22 @@
 //! Compressed Sparse Row (and Compressed Sparse Column) implementation.
 
+/// Value with the corresponding column.
 #[derive(Debug)]
-pub struct IndexedValue<I, V> {
-    index: I,
-    value: V,
+pub struct ColumnValue<I, V> {
+    pub column: I,
+    pub value: V,
 }
 
+/// Compressed Sparse Row matrix.
 #[derive(Debug)]
-pub struct CSR<I, V> {
-    values: Vec<IndexedValue<I, V>>,
+pub struct Csr<I, V> {
+    values: Vec<ColumnValue<I, V>>,
     pointers: Vec<usize>,
 }
 
-impl<I, V> CSR<I, V> {
-    pub fn new() -> CSR<I, V> {
-        CSR { values: Vec::new(), pointers: Vec::new() }
+impl<I, V> Csr<I, V> {
+    pub fn new() -> Self {
+        Csr { values: Vec::new(), pointers: Vec::new() }
     }
 
     /// Starts a new row.
@@ -25,8 +27,8 @@ impl<I, V> CSR<I, V> {
     }
 
     /// Adds a new value to the current row.
-    pub fn next(&mut self, index: I, value: V) {
-        self.values.push(IndexedValue { value: value, index: index });
+    pub fn next(&mut self, column: I, value: V) {
+        self.values.push(ColumnValue { value: value, column: column });
     }
 
     /// Gets value count.
@@ -40,14 +42,40 @@ impl<I, V> CSR<I, V> {
     }
 
     /// Gets a slice to the row.
-    pub fn get_row(&self, index: usize) -> &[IndexedValue<I, V>] {
+    pub fn get_row(&self, index: usize) -> &[ColumnValue<I, V>] {
         &self.values[self.pointers[index]..self.pointers[index + 1]]
+    }
+
+    /// Gets an iterator over the matrix.
+    pub fn iter(&self) -> CsrIterator<I, V> {
+        CsrIterator { csr: self, index: 0 }
+    }
+}
+
+/// Value with the corresponding row and column.
+#[derive(Debug)]
+pub struct MatrixValue<I, V> {
+    row: usize,
+    column_value: ColumnValue<I, V>,
+}
+
+/// Iterates over CSR matrix.
+pub struct CsrIterator<'a, I: 'a, V: 'a> {
+    csr: &'a Csr<I, V>,
+    index: usize,
+}
+
+impl<'a, I, V> Iterator for CsrIterator<'a, I, V> {
+    type Item = MatrixValue<I, V>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        None // TODO: return the next item or None.
     }
 }
 
 #[test]
 fn test_start() {
-    let mut storage = CSR::new();
+    let mut storage = Csr::new();
     storage.start();
     storage.next(0, 1.0);
     storage.next(2, 2.0);
@@ -60,7 +88,7 @@ fn test_start() {
 
 #[test]
 fn test_next() {
-    let mut storage = CSR::new();
+    let mut storage = Csr::new();
     storage.start();
     storage.next(0, 1.0);
     storage.next(2, 2.0);
@@ -72,7 +100,7 @@ fn test_next() {
 
 #[test]
 fn test_len() {
-    let mut storage = CSR::new();
+    let mut storage = Csr::new();
     storage.start();
     storage.next(0, 1.0);
     storage.next(2, 2.0);
@@ -83,7 +111,7 @@ fn test_len() {
 
 #[test]
 fn test_row_count() {
-    let mut storage = CSR::new();
+    let mut storage = Csr::new();
     storage.start();
     storage.next(0, 1.0);
     storage.next(2, 2.0);
@@ -94,7 +122,7 @@ fn test_row_count() {
 
 #[test]
 fn test_get_row() {
-    let mut storage = CSR::new();
+    let mut storage = Csr::new();
     storage.start();
     storage.next(0, 1.0);
     storage.start();
@@ -105,5 +133,5 @@ fn test_get_row() {
     storage.start();
 
     assert_eq!(storage.get_row(1).len(), 2);
-    assert_eq!(storage.get_row(1)[0].index, 2);
+    assert_eq!(storage.get_row(1)[0].column, 2);
 }

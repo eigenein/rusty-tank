@@ -2,6 +2,8 @@
 //!
 //! See http://habrahabr.ru/company/surfingbird/blog/141959/.
 
+use csr::Csr;
+
 #[derive(Debug)]
 pub struct Model {
     /// Base predictor.
@@ -18,7 +20,7 @@ pub struct Model {
 
 impl Model {
     /// Creates a new model.
-    pub fn new(row_count: usize, column_count: usize, feature_count: usize) -> Model {
+    pub fn new(row_count: usize, column_count: usize, feature_count: usize) -> Self {
         Model {
             base: 0.0,
             row_bases: vec![0.0; row_count],
@@ -29,8 +31,12 @@ impl Model {
     }
 
     /// Makes a step.
-    pub fn make_step() {
-        // TODO.
+    ///
+    /// Returns RMSE.
+    pub fn make_step<I>(csr: Csr<I, f32>) -> f32 {
+        let mut rmse = 0.0;
+        // TODO: http://habrahabr.ru/company/surfingbird/blog/141959/.
+        0.0
     }
 
     /// Creates a vector of feature vectors.

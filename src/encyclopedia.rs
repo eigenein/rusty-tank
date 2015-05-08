@@ -14,7 +14,7 @@ impl Encyclopedia {
     }
 
     /// Initializes an encyclopedia instance.
-    pub fn new() -> Encyclopedia {
+    pub fn new() -> Self {
         let mut tank_column = HashMap::new();
         tank_column.insert(1, 0);
         tank_column.insert(33, 1);
