@@ -18,7 +18,7 @@ mod svd;
 
 const MIN_BATTLES: u32 = 0;
 const FEATURE_COUNT: usize = 4;
-const STEP_COUNT: usize = 10;
+const STEP_COUNT: usize = 20;
 const RATE: f32 = 0.1;
 const LAMBDA: f32 = 0.0;
 
