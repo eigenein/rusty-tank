@@ -19,7 +19,7 @@ mod svd;
 const MIN_BATTLES: u32 = 0;
 const FEATURE_COUNT: usize = 4;
 const STEP_COUNT: usize = 10;
-const RATE: f32 = 0.5;
+const RATE: f32 = 0.1;
 const LAMBDA: f32 = 0.0;
 
 #[allow(dead_code)]
@@ -27,7 +27,8 @@ fn main() {
     let mut input = get_input();
     let encyclopedia = encyclopedia::Encyclopedia::new();
     let (train_table, test_table) = read_stats(&mut input, &encyclopedia);
-    train(&train_table, &encyclopedia);
+    let model = train(&train_table, &encyclopedia);
+    evaluate(&model, &test_table);
 }
 
 /// Reads statistics file.
@@ -90,7 +91,7 @@ fn get_input() -> BufReader<File> {
 }
 
 /// Trains the model.
-fn train(train_table: &csr::Csr, encyclopedia: &encyclopedia::Encyclopedia) {
+fn train(train_table: &csr::Csr, encyclopedia: &encyclopedia::Encyclopedia) -> svd::Model {
     use std::f32;
     use time::now;
 
@@ -103,13 +104,31 @@ fn train(train_table: &csr::Csr, encyclopedia: &encyclopedia::Encyclopedia) {
     for step in 0..STEP_COUNT {
         let rmse = model.make_step(RATE, LAMBDA, train_table);
         println!(
-            "Training | step: {0} | {3} s/step | RMSE: {1:.6} | dRMSE: {2:.6}",
+            "Training #{0} | {3} s/step | RMSE: {1:.6} | dRMSE: {2:.6}",
             step, rmse, rmse - previous_rmse, get_seconds(start_time) / (step as i64 + 1)
         );
         previous_rmse = rmse;
     }
 
     println!("Training finished in {}s.", get_seconds(start_time));
+
+    model
+}
+
+/// Evaluates the model.
+fn evaluate(model: &svd::Model, test_table: &csr::Csr) {
+    let mut mae = 0.0;
+
+    for row_index in 0..(test_table.row_count() - 1) {
+        let row = test_table.get_row(row_index);
+        for column_value in row {
+            let predicted_value = model.predict(row_index, column_value.column);
+            mae += (predicted_value - column_value.value).abs();
+        }
+    }
+
+    let n = test_table.len() as f32;
+    println!("base: {} | MAE: {}.", model.base, mae / n);
 }
 
 /// Gets seconds elapsed since the specified time.

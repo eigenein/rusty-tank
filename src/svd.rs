@@ -7,7 +7,7 @@ use csr::{Csr, ColumnValue};
 #[derive(Debug)]
 pub struct Model {
     /// Base predictor.
-    base: f32,
+    pub base: f32,
     /// Base row predictors.
     row_bases: Vec<f32>,
     /// Base column predictors.
@@ -44,7 +44,7 @@ impl Model {
                 rmse += self.train(rate, lambda, row_index, column_value.column, column_value.value);
             }
         }
-        rmse
+        (rmse / csr.len() as f32).sqrt()
     }
 
     /// Predicts value at the specified position.
