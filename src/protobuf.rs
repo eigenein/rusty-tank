@@ -11,7 +11,7 @@ pub fn read_uvarint<R: Read>(input: &mut R) -> Option<u64> {
         if input.read(&mut buffer).unwrap() == 0 {
             return None;
         }
-        value = value | ((buffer[0] & 0x7F) as u64) << shift;
+        value |= ((buffer[0] & 0x7F) as u64) << shift;
         if buffer[0] & 0x80 == 0 {
             return Some(value);
         }

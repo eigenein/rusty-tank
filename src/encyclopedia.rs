@@ -8,9 +8,17 @@ pub struct Encyclopedia {
 }
 
 impl Encyclopedia {
+    /// Gets tank count.
+    pub fn len(&self) -> usize {
+        self.tank_column.len()
+    }
+
     /// Gets column by tank ID.
     pub fn get_column(&self, tank_id: u16) -> usize {
-        *self.tank_column.get(&tank_id).unwrap()
+        match self.tank_column.get(&tank_id) {
+            Some(&column) => column,
+            None => panic!("unknown tank ID: {}", tank_id)
+        }
     }
 
     /// Initializes an encyclopedia instance.
@@ -409,6 +417,11 @@ impl Encyclopedia {
         tank_column.insert(64065, 390);
         tank_column.insert(64561, 391);
         tank_column.insert(64817, 392);
+        // Manually added tanks.
+        tank_column.insert(59393, 393);
+        tank_column.insert(59137, 394);
+        tank_column.insert(59649, 395);
+
         Encyclopedia { tank_column: tank_column }
     }
 }
