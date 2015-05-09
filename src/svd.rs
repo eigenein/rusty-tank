@@ -7,7 +7,7 @@ use csr::{Csr, ColumnValue};
 #[derive(Debug)]
 pub struct Model {
     /// Base predictor.
-    pub base: f32,
+    base: f32,
     /// Base row predictors.
     row_bases: Vec<f32>,
     /// Base column predictors.
