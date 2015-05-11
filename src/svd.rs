@@ -2,7 +2,7 @@
 //!
 //! See http://habrahabr.ru/company/surfingbird/blog/141959/.
 
-use csr::{Csr, ColumnValue};
+use csr::Csr;
 
 #[derive(Debug)]
 pub struct Model {
