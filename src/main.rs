@@ -20,13 +20,13 @@ mod svd;
 /// Minimum battle count to train with.
 const MIN_BATTLES: u32 = 5;
 /// SVD feature count.
-const FEATURE_COUNT: usize = 16;
+const FEATURE_COUNT: usize = 2;
 /// SVD step count,
 const STEP_COUNT: usize = 100;
 /// Learning rate.
 const RATE: f32 = 0.1;
 /// Learning rate multiplier.
-const RATE_MULTIPLIER: f32 = 1.02;
+const RATE_MULTIPLIER: f32 = 1.00;
 /// Regularization parameter.
 const LAMBDA: f32 = 0.0;
 
@@ -76,21 +76,26 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
             Some(account) => {
                 let mut account_wins = 0;
                 let mut account_battles = 0;
-                for tank in account.tanks {
-                    if tank.battles < MIN_BATTLES {
-                        continue;
-                    }
-                    let rating = tank.wins as f32 / tank.battles as f32;
-                    (if !rng.gen_weighted_bool(3) {
+                for tank in &account.tanks {
+                    if tank.battles >= MIN_BATTLES {
                         account_wins += tank.wins;
                         account_battles += tank.battles;
-                        &mut train_table
-                    } else {
-                        &mut test_table
-                    }).next(encyclopedia.get_column(tank.id), rating);
+                    }
                 }
-                if account_battles != 0 {
-                    overall_rating.insert(train_table.row_count(), account_wins as f32 / account_battles as f32);
+                if account_battles == 0 {
+                    continue;
+                }
+                let account_rating = account_wins as f32 / account_battles as f32;
+                overall_rating.insert(train_table.row_count(), account_rating);
+                for tank in &account.tanks {
+                    if tank.battles >= MIN_BATTLES {
+                        let tank_rating = tank.wins as f32 / tank.battles as f32;
+                        (if !rng.gen_weighted_bool(3) {
+                            &mut train_table
+                        } else {
+                            &mut test_table
+                        }).next(encyclopedia.get_column(tank.id), if tank_rating < account_rating { -1.0 } else { 1.0 });
+                    }
                 }
             }
             None => break
@@ -133,7 +138,7 @@ fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr, 
         if rmse < previous_rmse {
             rate *= RATE_MULTIPLIER;
         } else {
-            rate /= RATE_MULTIPLIER * RATE_MULTIPLIER;
+            rate /= RATE_MULTIPLIER * RATE_MULTIPLIER * RATE_MULTIPLIER;
         }
         previous_rmse = rmse;
     }
@@ -153,7 +158,7 @@ fn evaluate(model: &svd::Model, table: &csr::Csr, overall_rating: &HashMap<usize
         for actual_value in table.get_row(row_index) {
             value_count += 1;
             let predicted_value = model.predict(row_index, actual_value.column);
-            if (predicted_value > account_rating) == (actual_value.value > account_rating) {
+            if (predicted_value > 0.0) == (actual_value.value > account_rating) {
                 true_count += 1;
             }
         }
