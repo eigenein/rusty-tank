@@ -76,8 +76,6 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
                     if tank.battles < MIN_BATTLES {
                         continue;
                     }
-                    let rating = tank.wins as f64 / tank.battles as f64;
-                    (if !rng.gen_weighted_bool(3) {
                     let tank_rating = tank.wins as f64 / tank.battles as f64;
                     (if !rng.gen_weighted_bool(4) {
                         account_wins += tank.wins;
