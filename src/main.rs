@@ -18,17 +18,13 @@ mod stats;
 mod svd;
 
 /// Minimum battle count to train with.
-const MIN_BATTLES: u32 = 5;
+const MIN_BATTLES: u32 = 10;
 /// SVD feature count.
-const FEATURE_COUNT: usize = 16;
-/// SVD step count,
-const STEP_COUNT: usize = 100;
+const FEATURE_COUNT: usize = 2;
 /// Learning rate.
-const RATE: f32 = 0.1;
-/// Learning rate multiplier.
-const RATE_MULTIPLIER: f32 = 1.02;
+const RATE: f64 = 0.1;
 /// Regularization parameter.
-const LAMBDA: f32 = 0.0;
+const LAMBDA: f64 = 2.0;
 
 #[allow(dead_code)]
 fn main() {
@@ -47,7 +43,7 @@ fn main() {
 /// Reads statistics file.
 ///
 /// Returns train rating table and test rating table.
-fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia) -> (csr::Csr, csr::Csr, HashMap<usize, f32>) {
+fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia) -> (csr::Csr, csr::Csr, HashMap<usize, f64>) {
     use rand::{Rng, thread_rng};
 
     use time::now;
@@ -80,7 +76,7 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
                     if tank.battles < MIN_BATTLES {
                         continue;
                     }
-                    let rating = tank.wins as f32 / tank.battles as f32;
+                    let rating = tank.wins as f64 / tank.battles as f64;
                     (if !rng.gen_weighted_bool(3) {
                         account_wins += tank.wins;
                         account_battles += tank.battles;
@@ -90,7 +86,7 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
                     }).next(encyclopedia.get_column(tank.id), rating);
                 }
                 if account_battles != 0 {
-                    overall_rating.insert(train_table.row_count(), account_wins as f32 / account_battles as f32);
+                    overall_rating.insert(train_table.row_count(), account_wins as f64 / account_battles as f64);
                 }
             }
             None => break
@@ -112,28 +108,26 @@ fn get_input() -> BufReader<File> {
 }
 
 /// Trains the model.
-fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr, overall_rating: &HashMap<usize, f32>) {
-    use std::f32;
+fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr, overall_rating: &HashMap<usize, f64>) {
+    use std::f64;
     use time::now;
 
     let start_time = now();
-    let mut rate = RATE;
 
     println!("Training started at {}.", start_time.ctime());
 
-    let mut previous_rmse = f32::INFINITY;
-    for step in 0..STEP_COUNT {
-        let rmse = model.make_step(rate, LAMBDA, train_table);
+    let mut previous_rmse = f64::INFINITY;
+    for step in 0.. {
+        let rmse = model.make_step(RATE, LAMBDA, train_table);
         let train_score = 100.0 * evaluate(model, &train_table, &overall_rating);
         let test_score = 100.0 * evaluate(model, &test_table, &overall_rating);
+        let drmse = rmse - previous_rmse;
         println!(
-            "#{0} | {3:.2} sec | rate: {6:.3} | RMSE: {1:.6} | dE: {2:.6} | train: {4:.2} | test: {5:.2}",
-            step, rmse, rmse - previous_rmse, get_seconds(start_time) / (step as f32 + 1.0), train_score, test_score, rate,
+            "#{0} | {3:.3} sec | RMSE: {1:.6} | dE: {2:.9} | train: {4:.3} | test: {5:.3}",
+            step, rmse, drmse, get_seconds(start_time) / (step as f32 + 1.0), train_score, test_score,
         );
-        if rmse < previous_rmse {
-            rate *= RATE_MULTIPLIER;
-        } else {
-            rate /= RATE_MULTIPLIER * RATE_MULTIPLIER;
+        if drmse.abs() < 0.000001 {
+            break;
         }
         previous_rmse = rmse;
     }
@@ -142,7 +136,7 @@ fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr, 
 }
 
 /// Evaluates the model.
-fn evaluate(model: &svd::Model, table: &csr::Csr, overall_rating: &HashMap<usize, f32>) -> f32 {
+fn evaluate(model: &svd::Model, table: &csr::Csr, overall_rating: &HashMap<usize, f64>) -> f64 {
     let mut value_count = 0;
     let mut true_count = 0;
     for row_index in 0..(table.row_count() - 1) {
@@ -158,7 +152,7 @@ fn evaluate(model: &svd::Model, table: &csr::Csr, overall_rating: &HashMap<usize
             }
         }
     }
-    true_count as f32 / value_count as f32
+    true_count as f64 / value_count as f64
 }
 
 /// Gets seconds elapsed since the specified time.

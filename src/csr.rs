@@ -4,7 +4,7 @@
 #[derive(Debug)]
 pub struct ColumnValue {
     pub column: usize,
-    pub value: f32,
+    pub value: f64,
 }
 
 /// Compressed Sparse Row matrix.
@@ -27,7 +27,7 @@ impl Csr {
     }
 
     /// Adds a new value to the current row.
-    pub fn next(&mut self, column: usize, value: f32) {
+    pub fn next(&mut self, column: usize, value: f64) {
         self.values.push(ColumnValue { value: value, column: column });
     }
 

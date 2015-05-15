@@ -7,17 +7,17 @@ use csr::Csr;
 #[derive(Debug)]
 pub struct Model {
     /// Base predictor.
-    base: f32,
+    base: f64,
     /// Base row predictors.
-    row_bases: Vec<f32>,
+    row_bases: Vec<f64>,
     /// Base column predictors.
-    column_bases: Vec<f32>,
+    column_bases: Vec<f64>,
     /// Feature count.
     feature_count: usize,
     /// Row features.
-    row_features: Vec<Vec<f32>>,
+    row_features: Vec<Vec<f64>>,
     /// Column features.
-    column_features: Vec<Vec<f32>>,
+    column_features: Vec<Vec<f64>>,
 }
 
 impl Model {
@@ -36,7 +36,7 @@ impl Model {
     /// Makes a step.
     ///
     /// Returns RMSE.
-    pub fn make_step(&mut self, rate: f32, lambda: f32, csr: &Csr) -> f32 {
+    pub fn make_step(&mut self, rate: f64, lambda: f64, csr: &Csr) -> f64 {
         let mut rmse = 0.0;
         for row_index in 0..(csr.row_count() - 1) {
             let row = csr.get_row(row_index);
@@ -44,23 +44,23 @@ impl Model {
                 rmse += self.train(rate, lambda, row_index, column_value.column, column_value.value);
             }
         }
-        (rmse / csr.len() as f32).sqrt()
+        (rmse / csr.len() as f64).sqrt()
     }
 
     /// Predicts value at the specified position.
-    pub fn predict(&self, row_index: usize, column_index: usize) -> f32 {
+    pub fn predict(&self, row_index: usize, column_index: usize) -> f64 {
         self.base + self.row_bases[row_index] + self.column_bases[column_index] + self.dot(row_index, column_index)
     }
 
     /// Creates a vector of feature vectors.
-    fn new_feature_vectors(count: usize, feature_count: usize) -> Vec<Vec<f32>> {
+    fn new_feature_vectors(count: usize, feature_count: usize) -> Vec<Vec<f64>> {
         (0..count).map(|_| vec![0.0; feature_count]).collect()
     }
 
     /// Trains the model with the given sample.
     ///
     /// Returns squared error.
-    fn train(&mut self, rate: f32, lambda: f32, row_index: usize, column_index: usize, value: f32) -> f32 {
+    fn train(&mut self, rate: f64, lambda: f64, row_index: usize, column_index: usize, value: f64) -> f64 {
         let error = value - self.predict(row_index, column_index);
         // Update baseline predictors.
         self.base += rate * error;
@@ -78,7 +78,7 @@ impl Model {
     }
 
     /// Gets feature vectors dot product.
-    fn dot(&self, row_index: usize, column_index: usize) -> f32 {
+    fn dot(&self, row_index: usize, column_index: usize) -> f64 {
         (0..self.feature_count).fold(0.0, |acc, i| acc + self.row_features[row_index][i] * self.column_features[column_index][i])
     }
 }
@@ -100,8 +100,8 @@ fn test_make_step() {
     // Build a model.
     let mut model = Model::new(3, 3, 1);
     // Train the model.
-    const rate: f32 = 0.001;
-    const lambda: f32 = 1.0;
+    const rate: f64 = 0.001;
+    const lambda: f64 = 1.0;
 
     let mut previous_rmse = model.make_step(rate, lambda, &csr);
     for _ in 0..100 {
