@@ -78,12 +78,14 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
                     }
                     let rating = tank.wins as f64 / tank.battles as f64;
                     (if !rng.gen_weighted_bool(3) {
+                    let tank_rating = tank.wins as f64 / tank.battles as f64;
+                    (if !rng.gen_weighted_bool(4) {
                         account_wins += tank.wins;
                         account_battles += tank.battles;
                         &mut train_table
                     } else {
                         &mut test_table
-                    }).next(encyclopedia.get_column(tank.id), rating);
+                    }).next(encyclopedia.get_column(tank.id), tank_rating);
                 }
                 if account_battles != 0 {
                     overall_rating.insert(train_table.row_count(), account_wins as f64 / account_battles as f64);
@@ -123,7 +125,7 @@ fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr, 
         let test_score = 100.0 * evaluate(model, &test_table, &overall_rating);
         let drmse = rmse - previous_rmse;
         println!(
-            "#{0} | {3:.3} sec | RMSE: {1:.6} | dE: {2:.9} | train: {4:.3} | test: {5:.3}",
+            "#{0} | {3:.3} sec | RMSE: {1:.6} | dE: {2:.7} | train: {4:.3} | test: {5:.3}",
             step, rmse, drmse, get_seconds(start_time) / (step as f32 + 1.0), train_score, test_score,
         );
         if drmse.abs() < 0.000001 {
