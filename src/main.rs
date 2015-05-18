@@ -17,7 +17,7 @@ mod stats;
 mod svd;
 
 /// SVD feature count.
-const FEATURE_COUNT: usize = 2;
+const FEATURE_COUNT: usize = 4;
 /// Learning rate.
 const RATE: f64 = 0.1;
 /// Regularization parameter.
@@ -75,7 +75,7 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
                         &mut train_table
                     } else {
                         &mut test_table
-                    }).next(encyclopedia.get_column(tank.id), tank_rating);
+                    }).next(encyclopedia.get_column(tank.id), tank_rating * 100.0);
                 }
             }
             None => break
@@ -131,7 +131,7 @@ fn evaluate(model: &svd::Model, table: &csr::Csr) -> f64 {
 
     for row_index in 0..table.row_count() {
         for actual_value in table.get_row(row_index) {
-            if (actual_value.value > 0.51) == (model.predict(row_index, actual_value.column) > 0.51) {
+            if (actual_value.value > 50.0) == (model.predict(row_index, actual_value.column) > 50.0) {
                 true_count += 1;
             }
         }
