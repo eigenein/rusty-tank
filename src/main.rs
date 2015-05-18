@@ -16,8 +16,10 @@ mod protobuf;
 mod stats;
 mod svd;
 
-/// Maximum deviation of tank rating from 0.5.
-const MAX_DEVIATION: f64 = 0.05;
+/// Average tank rating.
+const AVG_RATING: f64 = 0.51;
+/// Maximum deviation of tank rating from `AVG_RATING`.
+const MAX_DEVIATION: f64 = 0.1;
 /// SVD feature count.
 const FEATURE_COUNT: usize = 4;
 /// Learning rate.
@@ -54,6 +56,7 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
     let mut test_table = csr::Csr::new();
 
     let mut non_empty_account_count = 0;
+    let mut tank_battle_count = 0;
 
     println!("Reading started at {}.", start_time.ctime());
 
@@ -74,10 +77,11 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
             Some(account) => {
                 for tank in account.tanks {
                     let tank_rating = tank.wins as f64 / tank.battles as f64;
-                    if (tank_rating - 0.5).abs() > MAX_DEVIATION {
+                    if (tank_rating - AVG_RATING).abs() > MAX_DEVIATION {
                         continue;
                     }
                     non_empty = true;
+                    tank_battle_count += tank.battles;
                     (if !rng.gen_weighted_bool(4) {
                         &mut train_table
                     } else {
@@ -96,6 +100,7 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
     println!("Read {1} train and {2} test values in {0:.1}s.", get_seconds(start_time), train_table.len(), test_table.len());
     println!("Non-empty accounts: {0} ({1:.2}%).",
         non_empty_account_count, 100.0 * non_empty_account_count as f32 / train_table.row_count() as f32);
+    println!("Average tank battles: {0:.2}.", tank_battle_count as f32 / (train_table.len() + test_table.len()) as f32);
 
     (train_table, test_table)
 }
