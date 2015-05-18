@@ -55,9 +55,6 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
     let mut train_table = csr::Csr::new();
     let mut test_table = csr::Csr::new();
 
-    let mut non_empty_account_count = 0;
-    let mut tank_battle_count = 0;
-
     println!("Reading started at {}.", start_time.ctime());
 
     for i in 1.. {
@@ -71,36 +68,24 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
         train_table.start();
         test_table.start();
 
-        let mut non_empty = false;
-
         match stats::read_account(input) {
             Some(account) => {
                 for tank in account.tanks {
                     let tank_rating = tank.wins as f64 / tank.battles as f64;
-                    if (tank_rating - AVG_RATING).abs() > MAX_DEVIATION {
-                        continue;
+                    if tank_rating > 1.0 {
+                        continue; // work around a bug in kit.py
                     }
-                    non_empty = true;
-                    tank_battle_count += tank.battles;
-                    (if !rng.gen_weighted_bool(4) {
-                        &mut train_table
-                    } else {
-                        &mut test_table
-                    }).next(encyclopedia.get_column(tank.id), tank_rating);
+                    test_table.next(encyclopedia.get_column(tank.id), tank_rating);
+                    if (tank_rating - AVG_RATING).abs() < MAX_DEVIATION {
+                        train_table.next(encyclopedia.get_column(tank.id), tank_rating);
+                    }
                 }
             }
             None => break
         }
-
-        if non_empty {
-            non_empty_account_count += 1;
-        }
     }
 
     println!("Read {1} train and {2} test values in {0:.1}s.", get_seconds(start_time), train_table.len(), test_table.len());
-    println!("Non-empty accounts: {0} ({1:.2}%).",
-        non_empty_account_count, 100.0 * non_empty_account_count as f32 / train_table.row_count() as f32);
-    println!("Average tank battles: {0:.2}.", tank_battle_count as f32 / (train_table.len() + test_table.len()) as f32);
 
     (train_table, test_table)
 }
@@ -145,18 +130,24 @@ fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr) 
 
 /// Evaluates the model.
 fn evaluate(model: &svd::Model, table: &csr::Csr) -> (f64, f64) {
+    let mut error_count = 0;
     let mut error_sum = 0.0;
     let mut error_max: f64 = 0.0;
 
     for row_index in 0..table.row_count() {
         for actual_value in table.get_row(row_index) {
-            let error = (actual_value.value - model.predict(row_index, actual_value.column)).abs();
-            error_sum += error;
-            error_max = error_max.max(error);
+            let predicted_rating = model.predict(row_index, actual_value.column);
+            if (predicted_rating - AVG_RATING).abs() < MAX_DEVIATION {
+                // Value predicted ratings only in the range.
+                let error = (actual_value.value - predicted_rating).abs();
+                error_sum += error;
+                error_max = error_max.max(error);
+                error_count += 1;
+            }
         }
     }
 
-    (error_sum / table.len() as f64, error_max)
+    (error_sum / error_count as f64, error_max)
 }
 
 /// Gets seconds elapsed since the specified time.
