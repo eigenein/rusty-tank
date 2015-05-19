@@ -16,10 +16,12 @@ mod protobuf;
 mod stats;
 mod svd;
 
+/// Minimum battles count.
+const MIN_BATTLES: u32 = 10;
 /// SVD feature count.
-const FEATURE_COUNT: usize = 4;
+const FEATURE_COUNT: usize = 16;
 /// Learning rate.
-const RATE: f64 = 0.1;
+const RATE: f64 = 0.00001;
 /// Regularization parameter.
 const LAMBDA: f64 = 0.0;
 
@@ -42,11 +44,10 @@ fn main() {
 /// Returns train rating table and test rating table.
 fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia) -> (csr::Csr, csr::Csr) {
     use rand::{Rng, thread_rng};
-
     use time::now;
 
     let start_time = time::now();
-    let mut rng = rand::thread_rng();
+    let mut rng = thread_rng();
 
     let mut train_table = csr::Csr::new();
     let mut test_table = csr::Csr::new();
@@ -67,6 +68,9 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
         match stats::read_account(input) {
             Some(account) => {
                 for tank in account.tanks {
+                    if tank.battles < MIN_BATTLES {
+                        continue;
+                    }
                     let tank_rating = tank.wins as f64 / tank.battles as f64;
                     if tank_rating > 1.0 {
                         continue; // work around the bug in kit.py
@@ -116,7 +120,7 @@ fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr) 
             step, rmse, drmse, get_seconds(start_time) / (step as f32 + 1.0),
             train_score, test_score,
         );
-        if drmse.abs() < 0.00000001 {
+        if drmse.abs() < 0.000001 {
             break;
         }
         previous_rmse = rmse;

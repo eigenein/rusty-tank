@@ -2,7 +2,11 @@
 //!
 //! See http://habrahabr.ru/company/surfingbird/blog/141959/.
 
+use rand::{Rng, thread_rng};
+
 use csr::Csr;
+
+const GEN_RANGE: f64 = 1.0;
 
 #[derive(Debug)]
 pub struct Model {
@@ -23,13 +27,14 @@ pub struct Model {
 impl Model {
     /// Creates a new model.
     pub fn new(row_count: usize, column_count: usize, feature_count: usize) -> Self {
+        let mut rng = thread_rng();
         Model {
-            base: 0.0,
-            row_bases: vec![0.0; row_count],
-            column_bases: vec![0.0; column_count],
+            base: rng.gen_range(-GEN_RANGE, GEN_RANGE),
+            row_bases: (0..row_count).map(|_| rng.gen_range(-GEN_RANGE, GEN_RANGE)).collect(),
+            column_bases: (0..column_count).map(|_| rng.gen_range(-GEN_RANGE, GEN_RANGE)).collect(),
             feature_count: feature_count,
-            row_features: Model::new_feature_vectors(row_count, feature_count),
-            column_features: Model::new_feature_vectors(column_count, feature_count),
+            row_features: Model::new_feature_vectors(row_count, feature_count, &mut rng),
+            column_features: Model::new_feature_vectors(column_count, feature_count, &mut rng),
         }
     }
 
@@ -53,8 +58,12 @@ impl Model {
     }
 
     /// Creates a vector of feature vectors.
-    fn new_feature_vectors(count: usize, feature_count: usize) -> Vec<Vec<f64>> {
-        (0..count).map(|_| vec![0.0; feature_count]).collect()
+    fn new_feature_vectors<R: Rng>(count: usize, feature_count: usize, rng: &mut R) -> Vec<Vec<f64>> {
+        (0..count).map(
+            |_| (0..feature_count).map(
+                |_| rng.gen_range(-GEN_RANGE, GEN_RANGE)
+            ).collect()
+        ).collect()
     }
 
     /// Trains the model with the given sample.
