@@ -21,21 +21,22 @@ const MIN_BATTLES: u32 = 10;
 /// SVD feature count.
 const FEATURE_COUNT: usize = 16;
 /// Learning rate.
-const RATE: f64 = 0.00001;
+const RATE: f64 = 0.001;
 /// Regularization parameter.
-const LAMBDA: f64 = 0.0;
+const LAMBDA: f64 = 10.0;
 
 #[allow(dead_code)]
 fn main() {
     let mut input = get_input();
     let encyclopedia = encyclopedia::Encyclopedia::new();
     let (train_table, test_table) = read_stats(&mut input, &encyclopedia);
+    println!("Initializing model.");
     let mut model = svd::Model::new(train_table.row_count(), encyclopedia.len(), FEATURE_COUNT);
     println!("Initial evaluation.");
-    let train_score = evaluate(&model, &train_table);
-    println!("Train: {0:.4}.", train_score);
-    let test_score = evaluate(&model, &test_table);
-    println!("Test: {0:.4}.", test_score);
+    let train_error = evaluate(&model, &train_table);
+    println!("Train error: {0:.6}.", train_error);
+    let test_error = evaluate(&model, &test_table);
+    println!("Test error: {0:.6}.", test_error);
     train(&mut model, &train_table, &test_table);
 }
 
@@ -71,15 +72,14 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
                     if tank.battles < MIN_BATTLES {
                         continue;
                     }
-                    let tank_rating = tank.wins as f64 / tank.battles as f64;
-                    if tank_rating > 1.0 {
+                    if tank.wins > tank.battles {
                         continue; // work around the bug in kit.py
                     }
                     (if !rng.gen_weighted_bool(4) {
                         &mut train_table
                     } else {
                         &mut test_table
-                    }).next(encyclopedia.get_column(tank.id), tank_rating * 100.0);
+                    }).next(encyclopedia.get_column(tank.id), 100.0 * tank.wins as f64 / tank.battles as f64);
                 }
             }
             None => break
@@ -112,13 +112,12 @@ fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr) 
     let mut previous_rmse = f64::INFINITY;
     for step in 0.. {
         let rmse = model.make_step(RATE, LAMBDA, train_table);
-        let train_score = evaluate(model, &train_table);
-        let test_score = evaluate(model, &test_table);
+        let train_error = evaluate(model, &train_table);
+        let test_error = evaluate(model, &test_table);
         let drmse = rmse - previous_rmse;
         println!(
-            "#{0} | {3:.3} sec | RMSE: {1:.6} | dE: {2:.9} | train: {4:.4} | test: {5:.4}",
-            step, rmse, drmse, get_seconds(start_time) / (step as f32 + 1.0),
-            train_score, test_score,
+            "#{0} | {1:.2} sec | E: {2:.6} | dE: {3:.6} | train error: {4:.6} | test error: {5:.6}",
+            step, get_seconds(start_time) / (step as f32 + 1.0), rmse, -drmse, train_error, test_error,
         );
         if drmse.abs() < 0.000001 {
             break;
@@ -131,17 +130,15 @@ fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr) 
 
 /// Evaluates the model.
 fn evaluate(model: &svd::Model, table: &csr::Csr) -> f64 {
-    let mut true_count = 0;
+    let mut error = 0.0;
 
     for row_index in 0..table.row_count() {
         for actual_value in table.get_row(row_index) {
-            if (actual_value.value > 50.0) == (model.predict(row_index, actual_value.column) > 50.0) {
-                true_count += 1;
-            }
+            error += (model.predict(row_index, actual_value.column) - actual_value.value).abs();
         }
     }
 
-    100.0 * true_count as f64 / table.len() as f64
+    error / table.len() as f64
 }
 
 /// Gets seconds elapsed since the specified time.
