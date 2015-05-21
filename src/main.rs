@@ -24,6 +24,10 @@ const FEATURE_COUNT: usize = 16;
 const RATE: f64 = 0.001;
 /// Regularization parameter.
 const LAMBDA: f64 = 10.0;
+/// Minimum train RMSE change.
+const MIN_DRMSE: f64 = 0.000001;
+/// Maximum train iteration count.
+const MAX_ITERATION_COUNT: usize = 500;
 
 #[allow(dead_code)]
 fn main() {
@@ -38,6 +42,10 @@ fn main() {
     let test_error = evaluate(&model, &test_table);
     println!("Test error: {0:.6}.", test_error);
     train(&mut model, &train_table, &test_table);
+    let error_distribution = evaluate_error_distribution(&model, &test_table);
+    println!("Test error distribution:");
+    println!("------------------------");
+    print_error_distribution(error_distribution);
 }
 
 /// Reads statistics file.
@@ -75,7 +83,7 @@ fn read_stats<R: Read>(input: &mut R, encyclopedia: &encyclopedia::Encyclopedia)
                     if tank.wins > tank.battles {
                         continue; // work around the bug in kit.py
                     }
-                    (if !rng.gen_weighted_bool(4) {
+                    (if !rng.gen_weighted_bool(20) {
                         &mut train_table
                     } else {
                         &mut test_table
@@ -110,7 +118,7 @@ fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr) 
     println!("Training started at {}.", start_time.ctime());
 
     let mut previous_rmse = f64::INFINITY;
-    for step in 0.. {
+    for step in 0..MAX_ITERATION_COUNT {
         let rmse = model.make_step(RATE, LAMBDA, train_table);
         let train_error = evaluate(model, &train_table);
         let test_error = evaluate(model, &test_table);
@@ -119,7 +127,7 @@ fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr) 
             "#{0} | {1:.2} sec | E: {2:.6} | dE: {3:.6} | train error: {4:.6} | test error: {5:.6}",
             step, get_seconds(start_time) / (step as f32 + 1.0), rmse, -drmse, train_error, test_error,
         );
-        if drmse.abs() < 0.000001 {
+        if rmse.is_nan() || drmse.abs() < MIN_DRMSE {
             break;
         }
         previous_rmse = rmse;
@@ -139,6 +147,31 @@ fn evaluate(model: &svd::Model, table: &csr::Csr) -> f64 {
     }
 
     error / table.len() as f64
+}
+
+/// Evaluates model error distribution.
+fn evaluate_error_distribution(model: &svd::Model, table: &csr::Csr) -> Vec<f64> {
+    let mut distribution = vec![0.0; 102];
+    let increment = 1.0 / table.len() as f64;
+
+    for row_index in 0..table.row_count() {
+        for actual_value in table.get_row(row_index) {
+            let error = (model.predict(row_index, actual_value.column) - actual_value.value).abs().min(101.0);
+            distribution[error.round() as usize] += increment;
+        }
+    }
+
+    distribution
+}
+
+/// Prints error distribution.
+fn print_error_distribution(distribution: Vec<f64>) {
+    for (error, &frequency) in distribution.iter().enumerate() {
+        if frequency > 0.0001 {
+            let bar = std::iter::repeat("x").take((1000.0 * frequency) as usize).collect::<String>();
+            println!("  {0:3}%: {1:.2}% {2}", error, 100.0 * frequency, bar);
+        }
+    }
 }
 
 /// Gets seconds elapsed since the specified time.
