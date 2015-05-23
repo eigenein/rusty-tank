@@ -19,11 +19,11 @@ mod svd;
 /// Minimum battles count.
 const MIN_BATTLES: u32 = 10;
 /// SVD feature count.
-const FEATURE_COUNT: usize = 16;
+const FEATURE_COUNT: usize = 64;
 /// Learning rate.
 const RATE: f64 = 0.001;
 /// Regularization parameter.
-const LAMBDA: f64 = 10.0;
+const LAMBDA: f64 = 1.0;
 /// Minimum train RMSE change.
 const MIN_DRMSE: f64 = 0.000001;
 /// Maximum train iteration count.
@@ -166,10 +166,13 @@ fn evaluate_error_distribution(model: &svd::Model, table: &csr::Csr) -> Vec<f64>
 
 /// Prints error distribution.
 fn print_error_distribution(distribution: Vec<f64>) {
+    let mut cumulative_frequency = 0.0;
+
     for (error, &frequency) in distribution.iter().enumerate() {
+        cumulative_frequency += frequency;
         if frequency > 0.0001 {
             let bar = std::iter::repeat("x").take((1000.0 * frequency) as usize).collect::<String>();
-            println!("  {0:3}%: {1:.2}% {2}", error, 100.0 * frequency, bar);
+            println!("  {0:3}%: {1:.2}% {2}", error, 100.0 * cumulative_frequency, bar);
         }
     }
 }

@@ -6,3 +6,7 @@ authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 [dependencies]
 rand = "*"
 time = "*"
+
+[[bin]]
+name = "svd"
+path = "src/svd_main.rs"
