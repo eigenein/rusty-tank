@@ -8,5 +8,9 @@ rand = "*"
 time = "*"
 
 [[bin]]
-name = "svd"
-path = "src/svd_main.rs"
+name = "svdcf"
+path = "src/svdcf.rs"
+
+[[bin]]
+name = "ccf"
+path = "src/ccf.rs"

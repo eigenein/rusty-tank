@@ -109,12 +109,12 @@ fn test_make_step() {
     // Build a model.
     let mut model = Model::new(3, 3, 1);
     // Train the model.
-    const rate: f64 = 0.001;
-    const lambda: f64 = 1.0;
+    const RATE: f64 = 0.001;
+    const LAMBDA: f64 = 1.0;
 
-    let mut previous_rmse = model.make_step(rate, lambda, &csr);
+    let mut previous_rmse = model.make_step(RATE, LAMBDA, &csr);
     for _ in 0..100 {
-        let rmse = model.make_step(rate, lambda, &csr);
+        let rmse = model.make_step(RATE, LAMBDA, &csr);
         assert!(rmse < previous_rmse);
         previous_rmse = rmse;
     }

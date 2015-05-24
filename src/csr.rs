@@ -7,6 +7,8 @@ pub struct ColumnValue {
     pub value: f64,
 }
 
+pub type Row<'a> = &'a [ColumnValue];
+
 /// Compressed Sparse Row matrix.
 #[derive(Debug)]
 pub struct Csr {
@@ -42,70 +44,70 @@ impl Csr {
     }
 
     /// Gets a slice to the row.
-    pub fn get_row(&self, index: usize) -> &[ColumnValue] {
+    pub fn get_row(&self, index: usize) -> Row {
         &self.values[self.pointers[index]..self.pointers[index + 1]]
     }
 }
 
 #[test]
 fn test_start() {
-    let mut storage = Csr::new();
-    storage.start();
-    storage.next(0, 1.0);
-    storage.next(2, 2.0);
-    storage.start();
+    let mut table = Csr::new();
+    table.start();
+    table.next(0, 1.0);
+    table.next(2, 2.0);
+    table.start();
 
-    assert_eq!(storage.pointers.len(), 2);
-    assert_eq!(storage.pointers[0], 0);
-    assert_eq!(storage.pointers[1], 2);
+    assert_eq!(table.pointers.len(), 2);
+    assert_eq!(table.pointers[0], 0);
+    assert_eq!(table.pointers[1], 2);
 }
 
 #[test]
 fn test_next() {
-    let mut storage = Csr::new();
-    storage.start();
-    storage.next(0, 1.0);
-    storage.next(2, 2.0);
-    storage.next(5, 3.0);
-    storage.start();
+    let mut table = Csr::new();
+    table.start();
+    table.next(0, 1.0);
+    table.next(2, 2.0);
+    table.next(5, 3.0);
+    table.start();
 
-    assert_eq!(storage.values.len(), 3);
+    assert_eq!(table.values.len(), 3);
 }
 
 #[test]
 fn test_len() {
-    let mut storage = Csr::new();
-    storage.start();
-    storage.next(0, 1.0);
-    storage.next(2, 2.0);
-    storage.start();
+    let mut table = Csr::new();
+    table.start();
+    table.next(0, 1.0);
+    table.next(2, 2.0);
+    table.start();
 
-    assert_eq!(storage.len(), 2);
+    assert_eq!(table.len(), 2);
 }
 
 #[test]
 fn test_row_count() {
-    let mut storage = Csr::new();
-    storage.start();
-    storage.next(0, 1.0);
-    storage.next(2, 2.0);
-    storage.start();
+    let mut table = Csr::new();
+    table.start();
+    table.next(0, 1.0);
+    table.next(2, 2.0);
+    table.start();
 
-    assert_eq!(storage.row_count(), 1);
+    assert_eq!(table.row_count(), 1);
 }
 
 #[test]
 fn test_get_row() {
-    let mut storage = Csr::new();
-    storage.start();
-    storage.next(0, 1.0);
-    storage.start();
-    storage.next(2, 2.0);
-    storage.next(5, 3.0);
-    storage.start();
-    storage.next(1, 7.0);
-    storage.start();
+    let mut table = Csr::new();
+    table.start();
+    table.next(0, 1.0);
+    table.start();
+    table.next(2, 2.0);
+    table.next(5, 3.0);
+    table.start();
+    table.next(1, 7.0);
+    table.start();
 
-    assert_eq!(storage.get_row(1).len(), 2);
-    assert_eq!(storage.get_row(1)[0].column, 2);
+    assert_eq!(table.get_row(1).len(), 2);
+    assert_eq!(table.get_row(1)[0].column, 2);
 }
