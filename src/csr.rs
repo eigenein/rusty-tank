@@ -45,6 +45,7 @@ impl Csr {
 
     /// Gets a slice to the row.
     pub fn get_row(&self, index: usize) -> Row {
+        assert!(index < self.pointers.len());
         &self.values[self.pointers[index]..self.pointers[index + 1]]
     }
 }
