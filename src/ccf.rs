@@ -18,21 +18,21 @@ const ROWS_PER_CLUSTER: usize = 10;
 
 #[allow(dead_code)]
 fn main() {
-    let (encyclopedia, train_table, test_table) = helpers::get_stats(MIN_BATTLES);
+    let (encyclopedia, train_matrix, test_matrix) = helpers::get_stats(MIN_BATTLES);
     println!("Initializing model.");
-    let mut model = kmeans::Model::new(train_table.row_count(), encyclopedia.len(), train_table.row_count() / ROWS_PER_CLUSTER);
+    let mut model = kmeans::Model::new(train_matrix.row_count(), encyclopedia.len(), train_matrix.row_count() / ROWS_PER_CLUSTER);
     println!("Cluster count: {}.", model.cluster_count());
-    train(&mut model, &train_table);
+    train(&mut model, &train_matrix);
 }
 
 /// Trains the model.
-fn train(model: &mut kmeans::Model, train_table: &csr::Csr) {
+fn train(model: &mut kmeans::Model, train_matrix: &csr::Csr) {
     use time::now;
 
     let clustering_start_time = now();
     println!("Clustering started at {}.", clustering_start_time.ctime());
     for step in 0.. {
-        let changed_count = model.make_step(train_table);
+        let changed_count = model.make_step(train_matrix);
         println!("#{0} | clustering | changed: {1}", step, changed_count);
         if changed_count == 0 {
             break;

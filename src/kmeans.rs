@@ -4,7 +4,6 @@ use rand::{Rng, thread_rng};
 
 use corr;
 use csr::{Csr, Row};
-use helpers::AbstractModel;
 
 pub struct Model {
     row_count: usize,
@@ -53,11 +52,11 @@ impl Model {
     }
 
     /// Makes clustering step.
-    pub fn make_step(&mut self, table: &Csr) -> usize {
+    pub fn make_step(&mut self, matrix: &Csr) -> usize {
         let mut changed_count = 0;
         // Assign nearest centroids.
         for row_index in 0..self.row_count {
-            let nearest_centroid_index = self.get_nearest_centroid(table.get_row(row_index));
+            let nearest_centroid_index = self.get_nearest_centroid(matrix.get_row(row_index));
             if nearest_centroid_index != self.row_clusters[row_index] {
                 changed_count += 1;
             }
@@ -73,7 +72,7 @@ impl Model {
         // Sum up values.
         let mut value_count = vec![0usize; self.cluster_count * self.column_count];
         for row_index in 0..self.row_count {
-            for value in table.get_row(row_index) {
+            for value in matrix.get_row(row_index) {
                 let cluster_index = self.row_clusters[row_index];
                 // Increase column value count.
                 value_count[cluster_index * self.column_count + value.column] += 1;
@@ -112,13 +111,13 @@ impl Model {
 
 #[test]
 fn test_only_cluster() {
-    let mut table = Csr::new();
-    table.start();
-    table.next(0, 50.0);
-    table.start();
+    let mut matrix = Csr::new();
+    matrix.start();
+    matrix.next(0, 50.0);
+    matrix.start();
 
     let mut model = Model::new(1, 2, 1);
-    let changed = model.make_step(&table);
+    let changed = model.make_step(&matrix);
     assert_eq!(changed, 0);
     assert_eq!(model.get_cluster(0), 0);
     assert_eq!(model.get_centroid(0)[0].value, 50.0);

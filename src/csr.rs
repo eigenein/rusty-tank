@@ -59,63 +59,63 @@ impl Csr {
 
 #[test]
 fn test_start() {
-    let mut table = Csr::new();
-    table.start();
-    table.next(0, 1.0);
-    table.next(2, 2.0);
-    table.start();
+    let mut matrix = Csr::new();
+    matrix.start();
+    matrix.next(0, 1.0);
+    matrix.next(2, 2.0);
+    matrix.start();
 
-    assert_eq!(table.pointers.len(), 2);
-    assert_eq!(table.pointers[0], 0);
-    assert_eq!(table.pointers[1], 2);
+    assert_eq!(matrix.pointers.len(), 2);
+    assert_eq!(matrix.pointers[0], 0);
+    assert_eq!(matrix.pointers[1], 2);
 }
 
 #[test]
 fn test_next() {
-    let mut table = Csr::new();
-    table.start();
-    table.next(0, 1.0);
-    table.next(2, 2.0);
-    table.next(5, 3.0);
-    table.start();
+    let mut matrix = Csr::new();
+    matrix.start();
+    matrix.next(0, 1.0);
+    matrix.next(2, 2.0);
+    matrix.next(5, 3.0);
+    matrix.start();
 
-    assert_eq!(table.values.len(), 3);
+    assert_eq!(matrix.values.len(), 3);
 }
 
 #[test]
 fn test_len() {
-    let mut table = Csr::new();
-    table.start();
-    table.next(0, 1.0);
-    table.next(2, 2.0);
-    table.start();
+    let mut matrix = Csr::new();
+    matrix.start();
+    matrix.next(0, 1.0);
+    matrix.next(2, 2.0);
+    matrix.start();
 
-    assert_eq!(table.len(), 2);
+    assert_eq!(matrix.len(), 2);
 }
 
 #[test]
 fn test_row_count() {
-    let mut table = Csr::new();
-    table.start();
-    table.next(0, 1.0);
-    table.next(2, 2.0);
-    table.start();
+    let mut matrix = Csr::new();
+    matrix.start();
+    matrix.next(0, 1.0);
+    matrix.next(2, 2.0);
+    matrix.start();
 
-    assert_eq!(table.row_count(), 1);
+    assert_eq!(matrix.row_count(), 1);
 }
 
 #[test]
 fn test_get_row() {
-    let mut table = Csr::new();
-    table.start();
-    table.next(0, 1.0);
-    table.start();
-    table.next(2, 2.0);
-    table.next(5, 3.0);
-    table.start();
-    table.next(1, 7.0);
-    table.start();
+    let mut matrix = Csr::new();
+    matrix.start();
+    matrix.next(0, 1.0);
+    matrix.start();
+    matrix.next(2, 2.0);
+    matrix.next(5, 3.0);
+    matrix.start();
+    matrix.next(1, 7.0);
+    matrix.start();
 
-    assert_eq!(table.get_row(1).len(), 2);
-    assert_eq!(table.get_row(1)[0].column, 2);
+    assert_eq!(matrix.get_row(1).len(), 2);
+    assert_eq!(matrix.get_row(1)[0].column, 2);
 }

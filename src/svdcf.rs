@@ -25,23 +25,23 @@ const MAX_ITERATION_COUNT: usize = 500;
 
 #[allow(dead_code)]
 fn main() {
-    let (encyclopedia, train_table, test_table) = helpers::get_stats(MIN_BATTLES);
+    let (encyclopedia, train_matrix, test_matrix) = helpers::get_stats(MIN_BATTLES);
     println!("Initializing model.");
-    let mut model = svd::Model::new(train_table.row_count(), encyclopedia.len(), FEATURE_COUNT);
+    let mut model = svd::Model::new(train_matrix.row_count(), encyclopedia.len(), FEATURE_COUNT);
     println!("Initial evaluation.");
-    let train_error = helpers::evaluate(&model, &train_table);
+    let train_error = helpers::evaluate(&model, &train_matrix);
     println!("Train error: {0:.6}.", train_error);
-    let test_error = helpers::evaluate(&model, &test_table);
+    let test_error = helpers::evaluate(&model, &test_matrix);
     println!("Test error: {0:.6}.", test_error);
-    train(&mut model, &train_table, &test_table);
-    let error_distribution = helpers::evaluate_error_distribution(&model, &test_table);
+    train(&mut model, &train_matrix, &test_matrix);
+    let error_distribution = helpers::evaluate_error_distribution(&model, &test_matrix);
     println!("Test error distribution:");
     println!("------------------------");
     helpers::print_error_distribution(error_distribution);
 }
 
 /// Trains the model.
-fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr) {
+fn train(model: &mut svd::Model, train_matrix: &csr::Csr, test_matrix: &csr::Csr) {
     use std::f64;
     use time::now;
 
@@ -51,9 +51,9 @@ fn train(model: &mut svd::Model, train_table: &csr::Csr, test_table: &csr::Csr) 
 
     let mut previous_rmse = f64::INFINITY;
     for step in 0..MAX_ITERATION_COUNT {
-        let rmse = model.make_step(RATE, LAMBDA, train_table);
-        let train_error = helpers::evaluate(model, &train_table);
-        let test_error = helpers::evaluate(model, &test_table);
+        let rmse = model.make_step(RATE, LAMBDA, train_matrix);
+        let train_error = helpers::evaluate(model, &train_matrix);
+        let test_error = helpers::evaluate(model, &test_matrix);
         let drmse = rmse - previous_rmse;
         println!(
             "#{0} | {1:.2} sec | E: {2:.6} | dE: {3:.6} | train error: {4:.6} | test error: {5:.6}",
