@@ -10,7 +10,7 @@ pub struct Model {
     column_count: usize,
     cluster_count: usize,
     centroids: Csr,
-    row_clusters: Vec<usize>,
+    row_clusters: Vec<Option<usize>>,
 }
 
 impl Model {
@@ -32,7 +32,7 @@ impl Model {
             column_count: column_count,
             cluster_count: cluster_count,
             centroids: centroids,
-            row_clusters: vec![0; row_count],
+            row_clusters: vec![None; row_count],
         }
     }
 
@@ -42,7 +42,7 @@ impl Model {
     }
 
     /// Gets row cluster index.
-    pub fn get_cluster(&self, row_index: usize) -> usize {
+    pub fn get_cluster(&self, row_index: usize) -> Option<usize> {
         self.row_clusters[row_index]
     }
 
@@ -56,15 +56,20 @@ impl Model {
         let mut changed_count = 0;
         // Assign nearest centroids.
         for row_index in 0..self.row_count {
-            let nearest_centroid_index = self.get_nearest_centroid(matrix.get_row(row_index));
-            if nearest_centroid_index != self.row_clusters[row_index] {
+            let row = matrix.get_row(row_index);
+            if row.len() < 3 {
+                // FIX: this row correlates to any other one so it should be skipped.
+                continue;
+            }
+            let cluster_index = Some(self.get_nearest_centroid(row));
+            if cluster_index != self.row_clusters[row_index] {
                 changed_count += 1;
             }
-            self.row_clusters[row_index] = nearest_centroid_index;
+            self.row_clusters[row_index] = cluster_index;
         }
         // Reset centroids.
-        for centroid_index in 0..self.cluster_count {
-            let row = self.centroids.get_mutable_row(centroid_index);
+        for cluster_index in 0..self.cluster_count {
+            let row = self.centroids.get_mutable_row(cluster_index);
             for value in row.iter_mut() {
                 value.value = 0.0;
             }
@@ -72,12 +77,13 @@ impl Model {
         // Sum up values.
         let mut value_count = vec![0usize; self.cluster_count * self.column_count];
         for row_index in 0..self.row_count {
-            for value in matrix.get_row(row_index) {
-                let cluster_index = self.row_clusters[row_index];
-                // Increase column value count.
-                value_count[cluster_index * self.column_count + value.column] += 1;
-                // Increase centroid value.
-                self.centroids.get_mutable_row(cluster_index)[value.column].value += value.value;
+            if let Some(cluster_index) = self.row_clusters[row_index] {
+                for value in matrix.get_row(row_index) {
+                    // Increase column value count.
+                    value_count[cluster_index * self.column_count + value.column] += 1;
+                    // Increase centroid value.
+                    self.centroids.get_mutable_row(cluster_index)[value.column].value += value.value;
+                }
             }
         }
         // Divide by value count.
@@ -95,31 +101,39 @@ impl Model {
         use std::f64;
 
         let mut min_distance = f64::INFINITY;
-        let mut centroid_index = 0;
+        let mut cluster_index = 0;
 
         for i in 0..self.cluster_count {
             let distance = 1.0 - corr::pearson(row, self.centroids.get_row(i));
             if distance < min_distance {
                 min_distance = distance;
-                centroid_index = i;
+                cluster_index = i;
             }
         }
 
-        centroid_index
+        cluster_index
     }
 }
 
 #[test]
-fn test_only_cluster() {
+fn test_random() {
+    use std::f64;
+
+    let mut rng = thread_rng();
     let mut matrix = Csr::new();
-    matrix.start();
-    matrix.next(0, 50.0);
+    for _ in 0..10 {
+        matrix.start();
+        for column_index in 0..10 {
+            matrix.next(column_index, if !rng.gen_weighted_bool(5) { rng.gen_range(0.0, 100.0) } else { f64::NAN });
+        }
+    }
     matrix.start();
 
-    let mut model = Model::new(1, 2, 1);
-    let changed = model.make_step(&matrix);
-    assert_eq!(changed, 0);
-    assert_eq!(model.get_cluster(0), 0);
-    assert_eq!(model.get_centroid(0)[0].value, 50.0);
-    assert!(model.get_centroid(0)[1].value.is_nan());
+    let mut model = Model::new(10, 10, 15);
+    for step in 0.. {
+        if model.make_step(&matrix) == 0 {
+            break;
+        }
+        assert!(step < 10);
+    }
 }

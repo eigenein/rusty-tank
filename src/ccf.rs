@@ -14,7 +14,7 @@ mod stats;
 /// Minimum battles count.
 const MIN_BATTLES: u32 = 10;
 /// Row count per a cluster.
-const ROWS_PER_CLUSTER: usize = 10;
+const ROWS_PER_CLUSTER: usize = 200;
 
 #[allow(dead_code)]
 fn main() {

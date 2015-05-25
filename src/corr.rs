@@ -20,12 +20,14 @@ pub fn pearson(a: csr::Row, b: csr::Row) -> f64 {
         } else if value_a.column > value_b.column {
             peekable_b.next();
         } else {
-            n += 1;
-            sum_a += value_a.value;
-            sum_squared_a += value_a.value * value_a.value;
-            sum_b += value_b.value;
-            sum_squared_b += value_b.value * value_b.value;
-            product_sum += value_a.value * value_b.value;
+            if !value_a.value.is_nan() && !value_b.value.is_nan() {
+                n += 1;
+                sum_a += value_a.value;
+                sum_squared_a += value_a.value * value_a.value;
+                sum_b += value_b.value;
+                sum_squared_b += value_b.value * value_b.value;
+                product_sum += value_a.value * value_b.value;
+            }
             peekable_a.next();
             peekable_b.next();
         }
@@ -42,7 +44,7 @@ pub fn pearson(a: csr::Row, b: csr::Row) -> f64 {
 }
 
 #[test]
-fn test_pearson() {
+fn test_movies() {
     let mut matrix = csr::Csr::new();
 
     const LADY_IN_THE_WATER: usize = 0;
