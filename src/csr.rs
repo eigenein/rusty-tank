@@ -7,7 +7,8 @@ pub struct ColumnValue {
     pub value: f64,
 }
 
-pub type Row<'a> = &'a [ColumnValue];
+pub type Row<'a> = &'a[ColumnValue];
+pub type MutableRow<'a> = &'a mut[ColumnValue];
 
 /// Compressed Sparse Row matrix.
 #[derive(Debug)]
@@ -47,6 +48,12 @@ impl Csr {
     pub fn get_row(&self, index: usize) -> Row {
         assert!(index < self.pointers.len());
         &self.values[self.pointers[index]..self.pointers[index + 1]]
+    }
+
+    /// Gets a mutable slice to the row.
+    pub fn get_mutable_row(&mut self, index: usize) -> MutableRow {
+        assert!(index < self.pointers.len());
+        &mut self.values[self.pointers[index]..self.pointers[index + 1]]
     }
 }
 

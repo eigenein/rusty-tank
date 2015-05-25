@@ -8,6 +8,7 @@ use helpers::AbstractModel;
 
 pub struct Model {
     row_count: usize,
+    column_count: usize,
     cluster_count: usize,
     centroids: Csr,
     row_clusters: Vec<usize>,
@@ -29,6 +30,7 @@ impl Model {
 
         Model {
             row_count: row_count,
+            column_count: column_count,
             cluster_count: cluster_count,
             centroids: centroids,
             row_clusters: vec![0; row_count],
@@ -40,8 +42,20 @@ impl Model {
         self.cluster_count
     }
 
+    /// Gets row cluster index.
+    pub fn get_cluster(&self, row_index: usize) -> usize {
+        self.row_clusters[row_index]
+    }
+
+    /// Gets cluster centroid.
+    pub fn get_centroid(&self, index: usize) -> Row {
+        self.centroids.get_row(index)
+    }
+
+    /// Makes clustering step.
     pub fn make_step(&mut self, table: &Csr) -> usize {
         let mut changed_count = 0;
+        // Assign nearest centroids.
         for row_index in 0..self.row_count {
             let nearest_centroid_index = self.get_nearest_centroid(table.get_row(row_index));
             if nearest_centroid_index != self.row_clusters[row_index] {
@@ -49,9 +63,34 @@ impl Model {
             }
             self.row_clusters[row_index] = nearest_centroid_index;
         }
-        if changed_count != 0 {
-            // TODO.
+        if changed_count == 0 {
+            return changed_count;
         }
+        // Reset centroids.
+        for centroid_index in 0..self.cluster_count {
+            let row = self.centroids.get_mutable_row(centroid_index);
+            for value in row.iter_mut() {
+                value.value = 0.0;
+            }
+        }
+        // Sum up values.
+        let mut value_count = vec![0usize; self.cluster_count * self.column_count];
+        for row_index in 0..self.row_count {
+            for value in table.get_row(row_index) {
+                let cluster_index = self.row_clusters[row_index];
+                // Increase column value count.
+                value_count[cluster_index * self.column_count + value.column] += 1;
+                // Increase centroid value.
+                self.centroids.get_mutable_row(cluster_index)[value.column].value += value.value;
+            }
+        }
+        // Divide by value count.
+        for cluster_index in 0..self.cluster_count {
+            for value in self.centroids.get_mutable_row(cluster_index) {
+                value.value /= value_count[cluster_index * self.column_count + value.column] as f64;
+            }
+        }
+
         changed_count
     }
 
