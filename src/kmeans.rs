@@ -63,9 +63,6 @@ impl Model {
             }
             self.row_clusters[row_index] = nearest_centroid_index;
         }
-        if changed_count == 0 {
-            return changed_count;
-        }
         // Reset centroids.
         for centroid_index in 0..self.cluster_count {
             let row = self.centroids.get_mutable_row(centroid_index);
@@ -111,4 +108,19 @@ impl Model {
 
         centroid_index
     }
+}
+
+#[test]
+fn test_only_cluster() {
+    let mut table = Csr::new();
+    table.start();
+    table.next(0, 50.0);
+    table.start();
+
+    let mut model = Model::new(1, 2, 1);
+    let changed = model.make_step(&table);
+    assert_eq!(changed, 0);
+    assert_eq!(model.get_cluster(0), 0);
+    assert_eq!(model.get_centroid(0)[0].value, 50.0);
+    assert!(model.get_centroid(0)[1].value.is_nan());
 }
