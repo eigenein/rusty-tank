@@ -1,5 +1,6 @@
 //! Helper functions.
 
+use std;
 use std::fs::File;
 use std::io::{BufReader, Read};
 
@@ -8,6 +9,11 @@ use time;
 use csr;
 use encyclopedia;
 use stats;
+
+pub trait AbstractModel {
+    /// Predicts value at the specified position.
+    fn predict(&self, row_index: usize, column_index: usize) -> f64;
+}
 
 /// Gets statistics input.
 pub fn get_input() -> BufReader<File> {
@@ -74,4 +80,45 @@ pub fn get_seconds(start_time: time::Tm) -> f32 {
     use time::now;
 
     (now() - start_time).num_milliseconds() as f32 / 1000.0
+}
+
+/// Evaluates the model.
+pub fn evaluate(model: &AbstractModel, table: &csr::Csr) -> f64 {
+    let mut error = 0.0;
+
+    for row_index in 0..table.row_count() {
+        for actual_value in table.get_row(row_index) {
+            error += (model.predict(row_index, actual_value.column) - actual_value.value).abs();
+        }
+    }
+
+    error / table.len() as f64
+}
+
+/// Evaluates model error distribution.
+pub fn evaluate_error_distribution(model: &AbstractModel, table: &csr::Csr) -> Vec<f64> {
+    let mut distribution = vec![0.0; 102];
+    let increment = 1.0 / table.len() as f64;
+
+    for row_index in 0..table.row_count() {
+        for actual_value in table.get_row(row_index) {
+            let error = (model.predict(row_index, actual_value.column) - actual_value.value).abs().min(101.0);
+            distribution[error.round() as usize] += increment;
+        }
+    }
+
+    distribution
+}
+
+/// Prints error distribution.
+pub fn print_error_distribution(distribution: Vec<f64>) {
+    let mut cumulative_frequency = 0.0;
+
+    for (error, &frequency) in distribution.iter().enumerate() {
+        cumulative_frequency += frequency;
+        if frequency > 0.0001 {
+            let bar = std::iter::repeat("x").take((1000.0 * frequency) as usize).collect::<String>();
+            println!("  {0:3}%: {1:.2}% {2}", error, 100.0 * cumulative_frequency, bar);
+        }
+    }
 }

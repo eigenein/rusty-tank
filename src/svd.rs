@@ -5,6 +5,7 @@
 use rand::{Rng, thread_rng};
 
 use csr::Csr;
+use helpers::AbstractModel;
 
 const GEN_RANGE: f64 = 1.0;
 
@@ -52,11 +53,6 @@ impl Model {
         (rmse / csr.len() as f64).sqrt()
     }
 
-    /// Predicts value at the specified position.
-    pub fn predict(&self, row_index: usize, column_index: usize) -> f64 {
-        self.base + self.row_bases[row_index] + self.column_bases[column_index] + self.dot(row_index, column_index)
-    }
-
     /// Creates a vector of feature vectors.
     fn new_feature_vectors<R: Rng>(count: usize, feature_count: usize, rng: &mut R) -> Vec<Vec<f64>> {
         (0..count).map(
@@ -89,6 +85,12 @@ impl Model {
     /// Gets feature vectors dot product.
     fn dot(&self, row_index: usize, column_index: usize) -> f64 {
         (0..self.feature_count).fold(0.0, |acc, i| acc + self.row_features[row_index][i] * self.column_features[column_index][i])
+    }
+}
+
+impl AbstractModel for Model {
+    fn predict(&self, row_index: usize, column_index: usize) -> f64 {
+        self.base + self.row_bases[row_index] + self.column_bases[column_index] + self.dot(row_index, column_index)
     }
 }
 
