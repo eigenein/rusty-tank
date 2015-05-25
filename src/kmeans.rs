@@ -94,13 +94,13 @@ impl Model {
     fn get_nearest_centroid(&self, row: Row) -> usize {
         use std::f64;
 
-        let mut max_correlation = f64::NEG_INFINITY;
+        let mut min_distance = f64::INFINITY;
         let mut centroid_index = 0;
 
         for i in 0..self.cluster_count {
-            let correlation = corr::pearson(row, self.centroids.get_row(i));
-            if correlation > max_correlation {
-                max_correlation = correlation;
+            let distance = 1.0 - corr::pearson(row, self.centroids.get_row(i));
+            if distance < min_distance {
+                min_distance = distance;
                 centroid_index = i;
             }
         }
