@@ -7,6 +7,7 @@ mod corr;
 mod csr;
 mod encyclopedia;
 mod helpers;
+mod kmeans;
 mod protobuf;
 mod stats;
 

@@ -31,12 +31,12 @@ fn pearson(a: csr::Row, b: csr::Row) -> f64 {
         }
     }
 
-    if n == 0 {
+    if n < 2 {
         return 0.0;
     }
 
     let numerator = product_sum - (sum_a * sum_b / n as f64);
-    let denominator = ((sum_squared_a - sum_a  *sum_a / n as f64) * (sum_squared_b - sum_b * sum_b / n as f64)).sqrt();
+    let denominator = ((sum_squared_a - sum_a * sum_a / n as f64) * (sum_squared_b - sum_b * sum_b / n as f64)).sqrt();
 
     if denominator > 0.000001 { numerator / denominator } else { 0.0 }
 }
@@ -110,7 +110,7 @@ fn test_pearson() {
 
     // Unknown Artist.
     table.start();
-    table.next(THE_NIGHT_LISTENER, 4.5);
+    table.next(YOU_ME_AND_DUPREE, 4.5);
 
     table.start();
 
