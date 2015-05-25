@@ -10,6 +10,8 @@ use csr;
 use encyclopedia;
 use stats;
 
+pub const MAX_RATING: f64 = 100.0;
+
 pub trait AbstractModel {
     /// Predicts value at the specified position.
     fn predict(&self, row_index: usize, column_index: usize) -> f64;
@@ -118,7 +120,7 @@ fn read_stats<R: Read>(input: &mut R, min_battles: u32, encyclopedia: &encyclope
                         &mut train_table
                     } else {
                         &mut test_table
-                    }).next(encyclopedia.get_column(tank.id), 100.0 * tank.wins as f64 / tank.battles as f64);
+                    }).next(encyclopedia.get_column(tank.id), MAX_RATING * tank.wins as f64 / tank.battles as f64);
                 }
             }
             None => break
