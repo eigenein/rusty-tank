@@ -3,7 +3,7 @@
 use csr;
 
 /// Pearson correlation.
-fn pearson(a: csr::Row, b: csr::Row) -> f64 {
+pub fn pearson(a: csr::Row, b: csr::Row) -> f64 {
     let mut peekable_a = a.iter().peekable();
     let mut peekable_b = b.iter().peekable();
 

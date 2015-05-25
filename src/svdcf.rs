@@ -25,9 +25,7 @@ const MAX_ITERATION_COUNT: usize = 500;
 
 #[allow(dead_code)]
 fn main() {
-    let mut input = helpers::get_input();
-    let encyclopedia = encyclopedia::Encyclopedia::new();
-    let (train_table, test_table) = helpers::read_stats(&mut input, MIN_BATTLES, &encyclopedia);
+    let (encyclopedia, train_table, test_table) = helpers::get_stats(MIN_BATTLES);
     println!("Initializing model.");
     let mut model = svd::Model::new(train_table.row_count(), encyclopedia.len(), FEATURE_COUNT);
     println!("Initial evaluation.");
