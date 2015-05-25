@@ -122,3 +122,17 @@ fn test_movies() {
     assert_eq!(pearson(matrix.get_row(6), matrix.get_row(4)), 0.92447345164190486);
     assert_eq!(pearson(matrix.get_row(6), matrix.get_row(7)), 0.0);
 }
+
+#[test]
+fn test_two() {
+    let mut matrix = csr::Csr::new();
+    matrix.start();
+    matrix.next(0, 20.0);
+    matrix.next(1, 10.0);
+    matrix.start();
+    matrix.next(0, 10.0);
+    matrix.next(1, 20.0);
+    matrix.start();
+
+    assert_eq!(pearson(matrix.get_row(0), matrix.get_row(1)), -1.0);
+}

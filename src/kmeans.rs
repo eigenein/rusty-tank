@@ -52,8 +52,9 @@ impl Model {
     }
 
     /// Makes clustering step.
-    pub fn make_step(&mut self, matrix: &Csr) -> usize {
-        let mut changed_count = 0;
+    pub fn make_step(&mut self, matrix: &Csr) -> f64 {
+        let mut total_count = 0;
+        let mut error_sum = 0.0;
         // Assign nearest centroids.
         for row_index in 0..self.row_count {
             let row = matrix.get_row(row_index);
@@ -61,11 +62,10 @@ impl Model {
                 // FIX: this row correlates to any other one so it should be skipped.
                 continue;
             }
-            let cluster_index = Some(self.get_nearest_centroid(row));
-            if cluster_index != self.row_clusters[row_index] {
-                changed_count += 1;
-            }
-            self.row_clusters[row_index] = cluster_index;
+            let (cluster_index, distance) = self.get_nearest_centroid(row);
+            self.row_clusters[row_index] = Some(cluster_index);
+            total_count += 1;
+            error_sum += distance * distance;
         }
         // Reset centroids.
         for cluster_index in 0..self.cluster_count {
@@ -93,11 +93,11 @@ impl Model {
             }
         }
 
-        changed_count
+        error_sum / total_count as f64
     }
 
     /// Gets the nearest centroid by the given row.
-    fn get_nearest_centroid(&self, row: Row) -> usize {
+    fn get_nearest_centroid(&self, row: Row) -> (usize, f64) {
         use std::f64;
 
         let mut min_distance = f64::INFINITY;
@@ -111,7 +111,7 @@ impl Model {
             }
         }
 
-        cluster_index
+        (cluster_index, min_distance)
     }
 }
 
