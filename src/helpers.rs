@@ -14,7 +14,7 @@ pub const MAX_RATING: f64 = 100.0;
 
 pub trait AbstractModel {
     /// Predicts value at the specified position.
-    fn predict(&self, row_index: usize, column_index: usize) -> f64;
+    fn predict(&self, train_matrix: &csr::Csr, row_index: usize, column_index: usize) -> f64;
 }
 
 pub fn get_stats<F>(min_battles: u32, f: F) -> (encyclopedia::Encyclopedia, csr::Csr, csr::Csr)
@@ -40,15 +40,15 @@ pub fn get_seconds(start_time: time::Tm) -> f32 {
 }
 
 /// Evaluates the model.
-pub fn evaluate<F>(model: &AbstractModel, matrix: &csr::Csr, inverse_f: F) -> f64
+pub fn evaluate<F>(model: &AbstractModel, train_matrix: &csr::Csr, test_matrix: &csr::Csr, inverse_f: F) -> (usize, f64)
     where F : Fn(f64) -> f64 {
 
     let mut error_count = 0;
     let mut error_sum = 0.0;
 
-    for row_index in 0..matrix.row_count() {
-        for actual_value in matrix.get_row(row_index) {
-            let predicted_value = inverse_f(model.predict(row_index, actual_value.column));
+    for row_index in 0..test_matrix.row_count() {
+        for actual_value in test_matrix.get_row(row_index) {
+            let predicted_value = inverse_f(model.predict(&train_matrix, row_index, actual_value.column));
             if !predicted_value.is_nan() {
                 error_count += 1;
                 error_sum += (predicted_value - inverse_f(actual_value.value)).abs();
@@ -56,19 +56,19 @@ pub fn evaluate<F>(model: &AbstractModel, matrix: &csr::Csr, inverse_f: F) -> f6
         }
     }
 
-    error_sum / error_count as f64
+    (error_count, error_sum / error_count as f64)
 }
 
 /// Evaluates model error distribution.
-pub fn evaluate_error_distribution<F>(model: &AbstractModel, matrix: &csr::Csr, inverse_f: F) -> Vec<f64>
+pub fn evaluate_error_distribution<F>(model: &AbstractModel, train_matrix: &csr::Csr, test_matrix: &csr::Csr, inverse_f: F) -> Vec<f64>
     where F : Fn(f64) -> f64 {
 
     let mut distribution = vec![0.0; 102];
-    let increment = 1.0 / matrix.len() as f64;
+    let increment = 1.0 / test_matrix.len() as f64;
 
-    for row_index in 0..matrix.row_count() {
-        for actual_value in matrix.get_row(row_index) {
-            let error = inverse_f(model.predict(row_index, actual_value.column)) - inverse_f(actual_value.value);
+    for row_index in 0..test_matrix.row_count() {
+        for actual_value in test_matrix.get_row(row_index) {
+            let error = inverse_f(model.predict(&train_matrix, row_index, actual_value.column)) - inverse_f(actual_value.value);
             if !error.is_nan() {
                 distribution[error.abs().min(101.0).round() as usize] += increment;
             }

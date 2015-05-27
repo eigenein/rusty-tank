@@ -82,6 +82,10 @@ impl Model {
         error * error
     }
 
+    fn predict(&self, row_index: usize, column_index: usize) -> f64 {
+        self.base + self.row_bases[row_index] + self.column_bases[column_index] + self.dot(row_index, column_index)
+    }
+
     /// Gets feature vectors dot product.
     fn dot(&self, row_index: usize, column_index: usize) -> f64 {
         (0..self.feature_count).fold(0.0, |acc, i| acc + self.row_features[row_index][i] * self.column_features[column_index][i])
@@ -89,8 +93,9 @@ impl Model {
 }
 
 impl AbstractModel for Model {
-    fn predict(&self, row_index: usize, column_index: usize) -> f64 {
-        self.base + self.row_bases[row_index] + self.column_bases[column_index] + self.dot(row_index, column_index)
+    #[allow(unused_variables)]
+    fn predict(&self, train_matrix: &Csr, row_index: usize, column_index: usize) -> f64 {
+        self.predict(row_index, column_index)
     }
 }
 
