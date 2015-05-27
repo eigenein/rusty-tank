@@ -47,10 +47,10 @@ pub fn evaluate<F>(model: &AbstractModel, matrix: &csr::Csr, inverse_f: F) -> f6
 
     for row_index in 0..matrix.row_count() {
         for actual_value in matrix.get_row(row_index) {
-            let error = inverse_f(model.predict(row_index, actual_value.column)) - inverse_f(actual_value.value);
-            if !error.is_nan() {
+            let predicted_value = inverse_f(model.predict(row_index, actual_value.column));
+            if !predicted_value.is_nan() {
                 error_count += 1;
-                error_sum += error.abs();
+                error_sum += (predicted_value - inverse_f(actual_value.value)).abs();
             }
         }
     }
