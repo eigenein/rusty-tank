@@ -17,11 +17,18 @@ pub trait AbstractModel {
     fn predict(&self, row_index: usize, column_index: usize) -> f64;
 }
 
-pub fn get_stats(min_battles: u32) -> (encyclopedia::Encyclopedia, csr::Csr, csr::Csr) {
+pub fn get_stats<F>(min_battles: u32, f: F) -> (encyclopedia::Encyclopedia, csr::Csr, csr::Csr)
+    where F : Fn(f64) -> f64 {
+
     let mut input = get_input();
     let encyclopedia = encyclopedia::Encyclopedia::new();
-    let (train_matrix, test_matrix) = read_stats(&mut input, min_battles, &encyclopedia);
+    let (train_matrix, test_matrix) = read_stats(&mut input, min_battles, &encyclopedia, f);
     (encyclopedia, train_matrix, test_matrix)
+}
+
+/// Identity function. Returns the given value.
+pub fn identity(value: f64) -> f64 {
+    value
 }
 
 /// Gets seconds elapsed since the specified time.
@@ -32,27 +39,38 @@ pub fn get_seconds(start_time: time::Tm) -> f32 {
 }
 
 /// Evaluates the model.
-pub fn evaluate(model: &AbstractModel, matrix: &csr::Csr) -> f64 {
-    let mut error = 0.0;
+pub fn evaluate<F>(model: &AbstractModel, matrix: &csr::Csr, inverse_f: F) -> f64
+    where F : Fn(f64) -> f64 {
+
+    let mut error_count = 0;
+    let mut error_sum = 0.0;
 
     for row_index in 0..matrix.row_count() {
         for actual_value in matrix.get_row(row_index) {
-            error += (model.predict(row_index, actual_value.column) - actual_value.value).abs();
+            let error = inverse_f(model.predict(row_index, actual_value.column)) - inverse_f(actual_value.value);
+            if !error.is_nan() {
+                error_count += 1;
+                error_sum += error.abs();
+            }
         }
     }
 
-    error / matrix.len() as f64
+    error_sum / error_count as f64
 }
 
 /// Evaluates model error distribution.
-pub fn evaluate_error_distribution(model: &AbstractModel, matrix: &csr::Csr) -> Vec<f64> {
+pub fn evaluate_error_distribution<F>(model: &AbstractModel, matrix: &csr::Csr, inverse_f: F) -> Vec<f64>
+    where F : Fn(f64) -> f64 {
+
     let mut distribution = vec![0.0; 102];
     let increment = 1.0 / matrix.len() as f64;
 
     for row_index in 0..matrix.row_count() {
         for actual_value in matrix.get_row(row_index) {
-            let error = (model.predict(row_index, actual_value.column) - actual_value.value).abs().min(101.0);
-            distribution[error.round() as usize] += increment;
+            let error = inverse_f(model.predict(row_index, actual_value.column)) - inverse_f(actual_value.value);
+            if !error.is_nan() {
+                distribution[error.abs().min(101.0).round() as usize] += increment;
+            }
         }
     }
 
@@ -84,7 +102,9 @@ fn get_input() -> BufReader<File> {
 /// Reads statistics file.
 ///
 /// Returns train rating matrix and test rating matrix.
-fn read_stats<R: Read>(input: &mut R, min_battles: u32, encyclopedia: &encyclopedia::Encyclopedia) -> (csr::Csr, csr::Csr) {
+fn read_stats<R: Read, F>(input: &mut R, min_battles: u32, encyclopedia: &encyclopedia::Encyclopedia, f: F) -> (csr::Csr, csr::Csr)
+    where F : Fn(f64) -> f64 {
+
     use rand::{Rng, thread_rng};
     use time::now;
 
@@ -120,7 +140,7 @@ fn read_stats<R: Read>(input: &mut R, min_battles: u32, encyclopedia: &encyclope
                         &mut train_matrix
                     } else {
                         &mut test_matrix
-                    }).next(encyclopedia.get_column(tank.id), MAX_RATING * tank.wins as f64 / tank.battles as f64);
+                    }).next(encyclopedia.get_column(tank.id), f(MAX_RATING * tank.wins as f64 / tank.battles as f64));
                 }
             }
             None => break

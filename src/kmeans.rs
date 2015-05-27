@@ -114,26 +114,3 @@ impl Model {
         (cluster_index, min_distance)
     }
 }
-
-#[test]
-fn test_random() {
-    use std::f64;
-
-    let mut rng = thread_rng();
-    let mut matrix = Csr::new();
-    for _ in 0..10 {
-        matrix.start();
-        for column_index in 0..10 {
-            matrix.next(column_index, if !rng.gen_weighted_bool(5) { rng.gen_range(0.0, 100.0) } else { f64::NAN });
-        }
-    }
-    matrix.start();
-
-    let mut model = Model::new(10, 10, 15);
-    for step in 0.. {
-        if model.make_step(&matrix) == 0 {
-            break;
-        }
-        assert!(step < 10);
-    }
-}

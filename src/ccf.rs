@@ -22,7 +22,7 @@ const RUN_COUNT: usize = 2;
 fn main() {
     use std::cmp::max;
 
-    let (encyclopedia, train_matrix, test_matrix) = helpers::get_stats(MIN_BATTLES);
+    let (encyclopedia, train_matrix, test_matrix) = helpers::get_stats(MIN_BATTLES, helpers::identity);
     let cluster_count = max(2, train_matrix.row_count() / ROWS_PER_CLUSTER);
     println!("Starting clustering. Cluster count: {}.", cluster_count);
     let (_, error) = train(&train_matrix, encyclopedia.len(), cluster_count);
