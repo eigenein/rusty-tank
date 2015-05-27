@@ -70,10 +70,12 @@ fn train(model: &mut svd::Model, train_matrix: &csr::Csr, test_matrix: &csr::Csr
 
 const F_SCALE: f64 = 4.0;
 
+#[allow(dead_code)]
 fn sigmoid(value: f64) -> f64 {
     100.0 / (1.0 + ((50.0 - value) / F_SCALE).exp())
 }
 
+#[allow(dead_code)]
 fn inverse_sigmoid(value: f64) -> f64 {
     50.0 - F_SCALE * (100.0 / value - 1.0).ln()
 }

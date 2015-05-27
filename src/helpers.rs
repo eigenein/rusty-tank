@@ -27,6 +27,7 @@ pub fn get_stats<F>(min_battles: u32, f: F) -> (encyclopedia::Encyclopedia, csr:
 }
 
 /// Identity function. Returns the given value.
+#[allow(dead_code)]
 pub fn identity(value: f64) -> f64 {
     value
 }
