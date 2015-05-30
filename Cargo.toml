@@ -10,7 +10,3 @@ time = "*"
 [[bin]]
 name = "svdcf"
 path = "src/svdcf.rs"
-
-[[bin]]
-name = "ccf"
-path = "src/ccf.rs"
