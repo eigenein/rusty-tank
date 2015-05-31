@@ -53,11 +53,11 @@ fn main() {
     let mut model = Model::new(encyclopedia.len());
     model.train(&train_matrix);
     println!("Evaluating.");
-    let train_error = helpers::evaluate(&model, &train_matrix, helpers::identity);
+    let train_error = helpers::evaluate(&model, &train_matrix, &train_matrix, helpers::identity);
     println!("Train error: {0:.6}.", train_error);
-    let test_error = helpers::evaluate(&model, &test_matrix, helpers::identity);
+    let test_error = helpers::evaluate(&model, &train_matrix, &test_matrix, helpers::identity);
     println!("Test error: {0:.6}.", test_error);
-    let error_distribution = helpers::evaluate_error_distribution(&model, &test_matrix, helpers::identity);
+    let error_distribution = helpers::evaluate_error_distribution(&model, &train_matrix, &test_matrix, helpers::identity);
     println!("Test error distribution:");
     println!("------------------------");
     helpers::print_error_distribution(error_distribution);

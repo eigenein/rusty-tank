@@ -34,7 +34,7 @@ fn main() {
     let test_error = helpers::evaluate(&model, &train_matrix, &test_matrix, helpers::identity);
     println!("Test error: {0:.6}.", test_error);
     train(&mut model, &train_matrix, &test_matrix);
-    let error_distribution = helpers::evaluate_error_distribution(&model, &test_matrix, helpers::identity);
+    let error_distribution = helpers::evaluate_error_distribution(&model, &train_matrix, &test_matrix, helpers::identity);
     println!("Test error distribution:");
     println!("------------------------");
     helpers::print_error_distribution(error_distribution);
@@ -52,8 +52,8 @@ fn train(model: &mut svd::Model, train_matrix: &csr::Csr, test_matrix: &csr::Csr
     let mut previous_rmse = f64::INFINITY;
     for step in 0..MAX_ITERATION_COUNT {
         let rmse = model.make_step(RATE, LAMBDA, train_matrix);
-        let train_error = helpers::evaluate(model, &train_matrix, helpers::identity);
-        let test_error = helpers::evaluate(model, &test_matrix, helpers::identity);
+        let train_error = helpers::evaluate(model, &train_matrix, &train_matrix, helpers::identity);
+        let test_error = helpers::evaluate(model, &train_matrix, &test_matrix, helpers::identity);
         let drmse = rmse - previous_rmse;
         println!(
             "#{0} | {1:.2} sec | E: {2:.6} | dE: {3:.6} | train error: {4:.6} | test error: {5:.6}",
