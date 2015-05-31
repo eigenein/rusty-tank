@@ -14,7 +14,7 @@ pub const MAX_RATING: f64 = 100.0;
 
 pub trait AbstractModel {
     /// Predicts value at the specified position.
-    fn predict(&self, train_matrix: &csr::Csr, row_index: usize, column_index: usize) -> f64;
+    fn predict(&self, train_matrix: &csr::Csr, row_index: usize, column_index: usize) -> Option<f64>;
 }
 
 pub fn get_stats<F>(min_battles: u32, f: F) -> (encyclopedia::Encyclopedia, csr::Csr, csr::Csr)
@@ -48,10 +48,10 @@ pub fn evaluate<F>(model: &AbstractModel, train_matrix: &csr::Csr, test_matrix: 
 
     for row_index in 0..test_matrix.row_count() {
         for actual_value in test_matrix.get_row(row_index) {
-            let predicted_value = inverse_f(model.predict(train_matrix, row_index, actual_value.column));
-            if !predicted_value.is_nan() {
+            if let Some(predicted_value) = model.predict(train_matrix, row_index, actual_value.column) {
+                assert!(!predicted_value.is_nan());
                 error_count += 1;
-                error_sum += (predicted_value - inverse_f(actual_value.value)).abs();
+                error_sum += (inverse_f(predicted_value) - inverse_f(actual_value.value)).abs();
             }
         }
     }
@@ -68,8 +68,8 @@ pub fn evaluate_error_distribution<F>(model: &AbstractModel, train_matrix: &csr:
 
     for row_index in 0..test_matrix.row_count() {
         for actual_value in test_matrix.get_row(row_index) {
-            let error = inverse_f(model.predict(train_matrix, row_index, actual_value.column)) - inverse_f(actual_value.value);
-            if !error.is_nan() {
+            if let Some(predicted_value) = model.predict(train_matrix, row_index, actual_value.column) {
+                let error = inverse_f(predicted_value) - inverse_f(actual_value.value);
                 distribution[error.abs().min(101.0).round() as usize] += increment;
             }
         }

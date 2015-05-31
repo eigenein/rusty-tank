@@ -41,8 +41,8 @@ impl Model {
 
 impl helpers::AbstractModel for Model {
     #[allow(unused_variables)]
-    fn predict(&self, train_matrix: &csr::Csr, row_index: usize, column_index: usize) -> f64 {
-        self.average_rating[column_index]
+    fn predict(&self, train_matrix: &csr::Csr, row_index: usize, column_index: usize) -> Option<f64> {
+        Some(self.average_rating[column_index])
     }
 }
 

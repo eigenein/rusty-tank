@@ -94,8 +94,8 @@ impl Model {
 
 impl AbstractModel for Model {
     #[allow(unused_variables)]
-    fn predict(&self, train_matrix: &Csr, row_index: usize, column_index: usize) -> f64 {
-        self.predict(row_index, column_index)
+    fn predict(&self, train_matrix: &Csr, row_index: usize, column_index: usize) -> Option<f64> {
+        Some(self.predict(row_index, column_index))
     }
 }
 
