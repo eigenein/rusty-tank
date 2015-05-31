@@ -23,7 +23,7 @@ impl Model {
 }
 
 impl helpers::AbstractModel for Model {
-    fn predict(&self, row_index: usize, column_index: usize) -> f64 {
+    fn predict(&self, train_matrix: &csr::Csr, row_index: usize, column_index: usize) -> f64 {
         0.0
     }
 }

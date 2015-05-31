@@ -89,7 +89,8 @@ impl Model {
 }
 
 impl AbstractModel for Model {
-    fn predict(&self, row_index: usize, column_index: usize) -> f64 {
+    #[allow(unused_variables)]
+    fn predict(&self, train_matrix: &Csr, row_index: usize, column_index: usize) -> f64 {
         self.base + self.row_bases[row_index] + self.column_bases[column_index] + self.dot(row_index, column_index)
     }
 }

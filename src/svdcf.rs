@@ -29,9 +29,9 @@ fn main() {
     println!("Initializing model.");
     let mut model = svd::Model::new(train_matrix.row_count(), encyclopedia.len(), FEATURE_COUNT);
     println!("Initial evaluation.");
-    let train_error = helpers::evaluate(&model, &train_matrix, helpers::identity);
+    let train_error = helpers::evaluate(&model, &train_matrix, &train_matrix, helpers::identity);
     println!("Train error: {0:.6}.", train_error);
-    let test_error = helpers::evaluate(&model, &test_matrix, helpers::identity);
+    let test_error = helpers::evaluate(&model, &train_matrix, &test_matrix, helpers::identity);
     println!("Test error: {0:.6}.", test_error);
     train(&mut model, &train_matrix, &test_matrix);
     let error_distribution = helpers::evaluate_error_distribution(&model, &test_matrix, helpers::identity);
