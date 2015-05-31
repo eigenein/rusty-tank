@@ -13,11 +13,11 @@ mod svd;
 /// Minimum battles count.
 const MIN_BATTLES: u32 = 10;
 /// SVD feature count.
-const FEATURE_COUNT: usize = 8;
+const FEATURE_COUNT: usize = 4;
 /// Learning rate.
 const RATE: f64 = 0.001;
 /// Regularization parameter.
-const LAMBDA: f64 = 32.0;
+const LAMBDA: f64 = 16.0;
 /// Minimum train RMSE change.
 const MIN_DRMSE: f64 = 0.000001;
 /// Maximum train iteration count.

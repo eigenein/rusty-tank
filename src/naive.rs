@@ -22,18 +22,19 @@ impl Model {
     }
 
     pub fn train(&mut self, matrix: &csr::Csr) {
+        let mut rating_sum = vec![0.0f64; self.column_count];
         let mut rating_count = vec![0; self.column_count];
 
         for row_index in 0..(matrix.row_count() - 1) {
             let row = matrix.get_row(row_index);
             for value in row {
-                self.average_rating[value.column] += value.value;
+                rating_sum[value.column] += value.value;
                 rating_count[value.column] += 1;
             }
         }
 
         for column_index in 0..(self.column_count - 1) {
-            self.average_rating[column_index] /= rating_count[column_index] as f64;
+            self.average_rating[column_index] = rating_sum[column_index] / rating_count[column_index] as f64;
         }
     }
 }
