@@ -85,7 +85,7 @@ pub fn print_error_distribution(distribution: Vec<f64>) {
     for (error, &frequency) in distribution.iter().enumerate() {
         cumulative_frequency += frequency;
         if frequency > 0.0001 {
-            let bar = std::iter::repeat("x").take((1000.0 * frequency) as usize).collect::<String>();
+            let bar = std::iter::repeat("x").take((500.0 * frequency) as usize).collect::<String>();
             println!("  {0:3}%: {1:.2}% {2}", error, 100.0 * cumulative_frequency, bar);
         }
     }
