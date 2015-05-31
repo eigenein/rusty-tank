@@ -45,6 +45,7 @@ impl helpers::AbstractModel for Model {
     }
 }
 
+#[allow(dead_code)]
 fn main() {
     let (encyclopedia, train_matrix, test_matrix) = helpers::get_stats(MIN_BATTLES, helpers::identity);
     println!("Training.");
