@@ -10,3 +10,7 @@ time = "*"
 [[bin]]
 name = "svdcf"
 path = "src/svdcf.rs"
+
+[[bin]]
+name = "naive"
+path = "src/naive.rs"
