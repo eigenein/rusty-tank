@@ -14,3 +14,7 @@ path = "src/svdcf.rs"
 [[bin]]
 name = "naive"
 path = "src/naive.rs"
+
+[[bin]]
+name = "slopeone"
+path = "src/slopeone.rs"
