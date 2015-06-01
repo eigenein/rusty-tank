@@ -28,6 +28,7 @@ impl Model {
     /// Items have to be placed by rows.
     pub fn train(&mut self, matrix: &csr::Csr) {
         for row_1 in 0..matrix.row_count() {
+            println!("Training | {} of {}.", row_1, matrix.row_count());
             for row_2 in row_1..matrix.row_count() {
                 let correlation = pearson(matrix.get_row(row_1), matrix.get_row(row_2));
                 self.correlations[row_1 * self.row_count + row_2] = correlation;
@@ -38,9 +39,34 @@ impl Model {
 }
 
 impl helpers::AbstractModel for Model {
+    /// Quick and dirty implementation. :(
     #[allow(unused_variables)]
-    fn predict(&self, train_matrix: &csr::Csr, row_index: usize, column_index: usize) -> Option<f64> {
-        None
+    fn predict(&self, transposed_train_matrix: &csr::Csr, original_row_index: usize, original_column_index: usize) -> Option<f64> {
+        let mut empty = true;
+        let mut weight_sum = 0.0;
+        let mut weighted_sum = 0.0;
+
+        for transposed_row_index in 0..transposed_train_matrix.row_count() {
+            if transposed_row_index == original_column_index {
+                // Skip the requested row (tank).
+                continue;
+            }
+            let weight = self.correlations[original_column_index * self.row_count + transposed_row_index];
+            if weight <= 0.0 {
+                continue;
+            }
+            for transposed_value in transposed_train_matrix.get_row(transposed_row_index) {
+                if transposed_value.column == original_row_index {
+                    // Found the requested column (account).
+                    empty = false;
+                    weight_sum += weight;
+                    weighted_sum += weight * transposed_value.value;
+                    break;
+                }
+            }
+        }
+
+        if !empty { Some(weight_sum / weighted_sum) } else { None }
     }
 }
 
@@ -86,6 +112,18 @@ fn main() {
     let (encyclopedia, mut train_matrix, test_matrix) = helpers::get_stats(MIN_BATTLES, helpers::identity);
     println!("Transposing.");
     train_matrix.transpose();
+    println!("Training.");
+    let mut model = Model::new(encyclopedia.len());
+    model.train(&train_matrix);
+    println!("Evaluating.");
+    let train_error = helpers::evaluate(&model, &train_matrix, &train_matrix, helpers::identity);
+    println!("Train error: {0:.6}.", train_error);
+    let test_error = helpers::evaluate(&model, &train_matrix, &test_matrix, helpers::identity);
+    println!("Test error: {0:.6}.", test_error);
+    let error_distribution = helpers::evaluate_error_distribution(&model, &train_matrix, &test_matrix, helpers::identity);
+    println!("Test error distribution:");
+    println!("------------------------");
+    helpers::print_error_distribution(error_distribution);
 }
 
 #[test]
