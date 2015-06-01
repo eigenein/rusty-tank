@@ -8,13 +8,19 @@ pub struct ColumnValue {
 }
 
 pub type Row<'a> = &'a[ColumnValue];
-pub type MutableRow<'a> = &'a mut[ColumnValue];
 
 /// Compressed Sparse Row matrix.
 #[derive(Debug)]
 pub struct Csr {
     values: Vec<ColumnValue>,
     pointers: Vec<usize>,
+}
+
+/// Value with the corresponding row and column.
+#[derive(Debug)]
+struct RowColumnValue {
+    pub row: usize,
+    pub column_value: ColumnValue,
 }
 
 impl Csr {
@@ -48,6 +54,35 @@ impl Csr {
     pub fn get_row(&self, index: usize) -> Row {
         assert!(index < self.pointers.len());
         &self.values[self.pointers[index]..self.pointers[index + 1]]
+    }
+
+    /// Transposes matrix.
+    pub fn transpose(&mut self) {
+        // Make temporary COO matrix.
+        let mut row_column_values: Vec<RowColumnValue> = Vec::new();
+        for row_index in 0..self.row_count() {
+            for column_value in self.get_row(row_index) {
+                row_column_values.push(RowColumnValue {
+                    row: row_index,
+                    column_value: ColumnValue { value: column_value.value, column: column_value.column },
+                });
+            }
+        }
+        // Drop this matrix.
+        self.values.clear();
+        self.pointers = Vec::new();
+        // Sort the COO matrix by column then by row.
+        row_column_values.sort_by(|a, b| (a.column_value.column, a.row).cmp(&(b.column_value.column, b.row)));
+        // Reconstruct this matrix as a transposed one. Group by column index.
+        let mut current_column = None;
+        for row_column_value in row_column_values {
+            if current_column != Some(row_column_value.column_value.column) {
+                current_column = Some(row_column_value.column_value.column);
+                self.start();
+            }
+            self.next(row_column_value.row, row_column_value.column_value.value);
+        }
+        self.start();
     }
 }
 
@@ -112,4 +147,23 @@ fn test_get_row() {
 
     assert_eq!(matrix.get_row(1).len(), 2);
     assert_eq!(matrix.get_row(1)[0].column, 2);
+}
+
+#[test]
+fn test_transpose() {
+    let mut matrix = Csr::new();
+    matrix.start();
+    matrix.next(0, 1.0);
+    matrix.start();
+    matrix.next(2, 2.0);
+    matrix.next(5, 3.0);
+    matrix.start();
+    matrix.next(1, 7.0);
+    matrix.start();
+
+    matrix.transpose();
+
+    assert_eq!(matrix.pointers, vec![0, 1, 2, 3, 4]);
+    assert_eq!(matrix.values.iter().map(|value| value.column).collect::<Vec<usize>>(), vec![0, 2, 1, 1]);
+    assert_eq!(matrix.values.iter().map(|value| value.value).collect::<Vec<f64>>(), vec![1.0, 7.0, 2.0, 3.0]);
 }

@@ -29,7 +29,7 @@ impl Model {
         self.average_differences = vec![None; self.column_count * self.column_count];
         self.rating_count = vec![0; self.column_count];
         // Calculate differences.
-        for row_index in 0..(matrix.row_count() - 1) {
+        for row_index in 0..matrix.row_count() {
             let row = matrix.get_row(row_index);
             for value_1 in row {
                 self.rating_count[value_1.column] += 1;

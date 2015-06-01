@@ -11,6 +11,13 @@ mod stats;
 
 const MIN_BATTLES: u32 = 10;
 
+/// Collaborative filtering model.
+struct Model {
+    row_count: usize,
+    /// Correlations between rows.
+    correlations: Vec<f64>,
+}
+
 /// Gets Pearson correlation coefficient.
 fn pearson(a: csr::Row, b: csr::Row) -> f64 {
     use std::collections::HashMap;
@@ -50,7 +57,8 @@ fn pearson(a: csr::Row, b: csr::Row) -> f64 {
 
 #[allow(dead_code)]
 fn main() {
-    // TODO.
+    let (encyclopedia, train_matrix, test_matrix) = helpers::get_stats(MIN_BATTLES, helpers::identity);
+    // TODO: transpose train_matrix.
 }
 
 #[test]

@@ -44,7 +44,7 @@ impl Model {
     /// Returns RMSE.
     pub fn make_step(&mut self, rate: f64, lambda: f64, csr: &Csr) -> f64 {
         let mut rmse = 0.0;
-        for row_index in 0..(csr.row_count() - 1) {
+        for row_index in 0..csr.row_count() {
             let row = csr.get_row(row_index);
             for column_value in row {
                 rmse += self.train(rate, lambda, row_index, column_value.column, column_value.value);

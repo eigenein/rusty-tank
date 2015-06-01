@@ -25,7 +25,7 @@ impl Model {
         let mut rating_sum = vec![0.0f64; self.column_count];
         let mut rating_count = vec![0; self.column_count];
 
-        for row_index in 0..(matrix.row_count() - 1) {
+        for row_index in 0..matrix.row_count() {
             let row = matrix.get_row(row_index);
             for value in row {
                 rating_sum[value.column] += value.value;
