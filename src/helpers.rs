@@ -56,6 +56,7 @@ pub fn evaluate<F>(model: &AbstractModel, train_matrix: &csr::Csr, test_matrix: 
         }
     }
 
+    assert!(error_count != 0);
     error_sum / error_count as f64
 }
 

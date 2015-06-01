@@ -1,4 +1,6 @@
 //! Item-based collaborative filtering.
+///
+/// Draft implementation.
 
 extern crate rand;
 extern crate time;
@@ -10,6 +12,8 @@ mod protobuf;
 mod stats;
 
 const MIN_BATTLES: u32 = 10;
+const MIN_SHARED: usize = 3;
+const MIN_CORRELATION: f64 = 0.0;
 
 /// Collaborative filtering model.
 struct Model {
@@ -30,7 +34,7 @@ impl Model {
         for row_1 in 0..matrix.row_count() {
             println!("Training | {} of {}.", row_1, matrix.row_count());
             for row_2 in row_1..matrix.row_count() {
-                let correlation = pearson(matrix.get_row(row_1), matrix.get_row(row_2));
+                let correlation = pearson(matrix.get_row(row_1), matrix.get_row(row_2), MIN_SHARED);
                 self.correlations[row_1 * self.row_count + row_2] = correlation;
                 self.correlations[row_2 * self.row_count + row_1] = correlation;
             }
@@ -40,9 +44,9 @@ impl Model {
 
 impl helpers::AbstractModel for Model {
     /// Quick and dirty implementation. :(
-    #[allow(unused_variables)]
     fn predict(&self, transposed_train_matrix: &csr::Csr, original_row_index: usize, original_column_index: usize) -> Option<f64> {
-        let mut empty = true;
+        assert!(original_column_index < self.row_count, "{} < {}", original_column_index, self.row_count);
+
         let mut weight_sum = 0.0;
         let mut weighted_sum = 0.0;
 
@@ -52,13 +56,12 @@ impl helpers::AbstractModel for Model {
                 continue;
             }
             let weight = self.correlations[original_column_index * self.row_count + transposed_row_index];
-            if weight <= 0.0 {
+            if weight < MIN_CORRELATION {
                 continue;
             }
             for transposed_value in transposed_train_matrix.get_row(transposed_row_index) {
                 if transposed_value.column == original_row_index {
                     // Found the requested column (account).
-                    empty = false;
                     weight_sum += weight;
                     weighted_sum += weight * transposed_value.value;
                     break;
@@ -66,12 +69,12 @@ impl helpers::AbstractModel for Model {
             }
         }
 
-        if !empty { Some(weight_sum / weighted_sum) } else { None }
+        if weight_sum.abs() > 0.000001 { Some(weighted_sum / weight_sum) } else { None }
     }
 }
 
 /// Gets Pearson correlation coefficient.
-fn pearson(a: csr::Row, b: csr::Row) -> f64 {
+fn pearson(a: csr::Row, b: csr::Row, min_shared: usize) -> f64 {
     use std::collections::HashMap;
     // Map A column indexes into corresponding values.
     let mut a_map: HashMap<usize, f64> = HashMap::new();
@@ -96,7 +99,7 @@ fn pearson(a: csr::Row, b: csr::Row) -> f64 {
         }
     }
     // Get coefficient.
-    if n == 0 {
+    if n < min_shared {
         return 0.0;
     }
     let numerator = product_sum - (sum_a * sum_b / n as f64);
@@ -116,8 +119,6 @@ fn main() {
     let mut model = Model::new(encyclopedia.len());
     model.train(&train_matrix);
     println!("Evaluating.");
-    let train_error = helpers::evaluate(&model, &train_matrix, &train_matrix, helpers::identity);
-    println!("Train error: {0:.6}.", train_error);
     let test_error = helpers::evaluate(&model, &train_matrix, &test_matrix, helpers::identity);
     println!("Test error: {0:.6}.", test_error);
     let error_distribution = helpers::evaluate_error_distribution(&model, &train_matrix, &test_matrix, helpers::identity);
@@ -199,9 +200,9 @@ fn test_pearson() {
 
     matrix.start();
 
-    assert_eq!(pearson(matrix.get_row(0), matrix.get_row(1)), 0.39605901719066976);
-    assert_eq!(pearson(matrix.get_row(6), matrix.get_row(0)), 0.99124070716192991);
-    assert_eq!(pearson(matrix.get_row(6), matrix.get_row(3)), 0.89340514744156474);
-    assert_eq!(pearson(matrix.get_row(6), matrix.get_row(4)), 0.92447345164190486);
-    assert_eq!(pearson(matrix.get_row(6), matrix.get_row(7)), 0.0);
+    assert_eq!(pearson(matrix.get_row(0), matrix.get_row(1), 0), 0.39605901719066976);
+    assert_eq!(pearson(matrix.get_row(6), matrix.get_row(0), 0), 0.99124070716192991);
+    assert_eq!(pearson(matrix.get_row(6), matrix.get_row(3), 0), 0.89340514744156474);
+    assert_eq!(pearson(matrix.get_row(6), matrix.get_row(4), 0), 0.92447345164190486);
+    assert_eq!(pearson(matrix.get_row(6), matrix.get_row(7), 0), 0.0);
 }
