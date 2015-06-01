@@ -74,14 +74,18 @@ impl Csr {
         // Sort the COO matrix by column then by row.
         row_column_values.sort_by(|a, b| (a.column_value.column, a.row).cmp(&(b.column_value.column, b.row)));
         // Reconstruct this matrix as a transposed one. Group by column index.
-        let mut current_column = None;
+        let mut current_column = 0;
+        // Start the first row.
+        self.start();
+        // Push values.
         for row_column_value in row_column_values {
-            if current_column != Some(row_column_value.column_value.column) {
-                current_column = Some(row_column_value.column_value.column);
+            while current_column != row_column_value.column_value.column {
+                current_column += 1;
                 self.start();
             }
             self.next(row_column_value.row, row_column_value.column_value.value);
         }
+        // Finalize matrix.
         self.start();
     }
 }
@@ -163,7 +167,7 @@ fn test_transpose() {
 
     matrix.transpose();
 
-    assert_eq!(matrix.pointers, vec![0, 1, 2, 3, 4]);
+    assert_eq!(matrix.pointers, vec![0, 1, 2, 3, 3, 3, 4]);
     assert_eq!(matrix.values.iter().map(|value| value.column).collect::<Vec<usize>>(), vec![0, 2, 1, 1]);
     assert_eq!(matrix.values.iter().map(|value| value.value).collect::<Vec<f64>>(), vec![1.0, 7.0, 2.0, 3.0]);
 }

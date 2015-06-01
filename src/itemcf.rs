@@ -18,6 +18,32 @@ struct Model {
     correlations: Vec<f64>,
 }
 
+impl Model {
+    pub fn new(row_count: usize) -> Model {
+        Model { row_count: row_count, correlations: vec![0.0; row_count * row_count] }
+    }
+
+    /// Trains the model.
+    ///
+    /// Items have to be placed by rows.
+    pub fn train(&mut self, matrix: &csr::Csr) {
+        for row_1 in 0..matrix.row_count() {
+            for row_2 in row_1..matrix.row_count() {
+                let correlation = pearson(matrix.get_row(row_1), matrix.get_row(row_2));
+                self.correlations[row_1 * self.row_count + row_2] = correlation;
+                self.correlations[row_2 * self.row_count + row_1] = correlation;
+            }
+        }
+    }
+}
+
+impl helpers::AbstractModel for Model {
+    #[allow(unused_variables)]
+    fn predict(&self, train_matrix: &csr::Csr, row_index: usize, column_index: usize) -> Option<f64> {
+        None
+    }
+}
+
 /// Gets Pearson correlation coefficient.
 fn pearson(a: csr::Row, b: csr::Row) -> f64 {
     use std::collections::HashMap;
@@ -57,8 +83,9 @@ fn pearson(a: csr::Row, b: csr::Row) -> f64 {
 
 #[allow(dead_code)]
 fn main() {
-    let (encyclopedia, train_matrix, test_matrix) = helpers::get_stats(MIN_BATTLES, helpers::identity);
-    // TODO: transpose train_matrix.
+    let (encyclopedia, mut train_matrix, test_matrix) = helpers::get_stats(MIN_BATTLES, helpers::identity);
+    println!("Transposing.");
+    train_matrix.transpose();
 }
 
 #[test]
